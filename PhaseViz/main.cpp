@@ -6,8 +6,6 @@
 #include <cmath>
 #include <GL/glew.h>
 #include <gl/glut.h>
-
-
 #include <iostream>
 #include <memory>
 
@@ -80,7 +78,7 @@ int main(int argc, char** argv)
     glutInitWindowPosition(250, 50);
 
     // create window with window text    
-    glutCreateWindow("OpenGL Demo");
+    glutCreateWindow("Phase Space Visualizer");
     glewInit();
 
 
