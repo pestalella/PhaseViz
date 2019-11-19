@@ -1,16 +1,11 @@
 #include<Windows.h>    
 // first include Windows.h header file which is required    
 
-
 #include "RenderGL.h"
 
 #include <cmath>
-#include <stdio.h>    
 #include <GL/glew.h>
 #include <gl/glut.h>
-#include <conio.h>    
-#include <stdio.h>    
-//#include <string.h>    
 
 
 #include <iostream>
