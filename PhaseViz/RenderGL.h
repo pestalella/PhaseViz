@@ -11,7 +11,7 @@ public:
     void display();
     void reshape(int width, int height);
     void mouseDrag(int dx, int dy);
-    void updateData(std::vector<float> &data, int nLines);
+    void updateData(std::vector<std::vector<float>> const& lines);
 
 private:
     int numPoints;

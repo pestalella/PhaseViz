@@ -53,23 +53,22 @@ void mouseDrag(int x, int y)
 
 void generateData()
 {
-    std::vector<float>::size_type numVerts = 100;
-    std::vector<float> positions(numVerts * 3);
-    for (int i = 0; i < numVerts / 2; ++i)
-    {
-        float theta = 2.0 * M_PI * i / (double)numVerts;
-        positions[3 * i + 0] = cos(theta);
-        positions[3 * i + 1] = sin(theta);
-        positions[3 * i + 2] = 1.5 * i / numVerts;
+    int numLines = 500;
+    std::vector<float>::size_type numVerts = 2000;
+    std::vector<std::vector<float>> lines;
+
+    for (int curLine = 0; curLine < numLines; ++curLine) {
+        std::vector<float> positions(numVerts*3);
+        int r = rand() / (RAND_MAX + 1.0) * 2.0;
+        for (int i = 0; i < numVerts; ++i) {
+            float theta = 6*2.0*M_PI*i/(double)numVerts;
+            positions[3 * i + 0] = r*cos(theta*(curLine+1)/20);
+            positions[3 * i + 1] = r*sin(theta*(curLine + 1) / r);
+            positions[3 * i + 2] = 3.0*i/numVerts + 0.001*curLine;
+        }
+        lines.push_back(positions);
     }
-    for (int i = numVerts / 2; i < numVerts; ++i)
-    {
-        float theta = 2.0 * M_PI * i / (double)numVerts;
-        positions[3 * i + 0] = theta;
-        positions[3 * i + 1] = theta;
-        positions[3 * i + 2] = 1.5 * (i - numVerts/2) / numVerts;
-    }
-    phaseRender->updateData(positions, 1);
+    phaseRender->updateData(lines);
 }
 
 // main function    

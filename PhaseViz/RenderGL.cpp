@@ -9,93 +9,92 @@
 
 const double M_PI = 3.141592653589793238462643;
 
-GLuint loadShaders(const char* vertex_file_path, const char* fragment_file_path) {
-
+GLuint loadShaders(std::string const &vertexFilePath, std::string const &fragmentFilePath)
+{
     // Create the shaders
-    GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-    GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+    GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
     // Read the Vertex Shader code from the file
-    std::string VertexShaderCode;
-    std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
-    if (VertexShaderStream.is_open()) {
+    std::string vertexShaderCode;
+    std::ifstream vertexShaderStream(vertexFilePath, std::ios::in);
+    if (vertexShaderStream.is_open()) {
         std::stringstream sstr;
-        sstr << VertexShaderStream.rdbuf();
-        VertexShaderCode = sstr.str();
-        VertexShaderStream.close();
-    }
-    else {
-        printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
-        getchar();
+        sstr << vertexShaderStream.rdbuf();
+        vertexShaderCode = sstr.str();
+        vertexShaderStream.close();
+    } else {
+        std::cout << "Unable to open " << vertexFilePath << std::endl;
         return 0;
     }
 
     // Read the Fragment Shader code from the file
-    std::string FragmentShaderCode;
-    std::ifstream FragmentShaderStream(fragment_file_path, std::ios::in);
-    if (FragmentShaderStream.is_open()) {
+    std::string fragmentShaderCode;
+    std::ifstream fragmentShaderStream(fragmentFilePath, std::ios::in);
+    if (fragmentShaderStream.is_open()) {
         std::stringstream sstr;
-        sstr << FragmentShaderStream.rdbuf();
-        FragmentShaderCode = sstr.str();
-        FragmentShaderStream.close();
+        sstr << fragmentShaderStream.rdbuf();
+        fragmentShaderCode = sstr.str();
+        fragmentShaderStream.close();
     }
 
-    GLint Result = GL_FALSE;
-    int InfoLogLength;
+    GLint result = GL_FALSE;
+    int infoLogLength;
 
     // Compile Vertex Shader
-    printf("Compiling shader : %s\n", vertex_file_path);
-    char const* VertexSourcePointer = VertexShaderCode.c_str();
-    glShaderSource(VertexShaderID, 1, &VertexSourcePointer, NULL);
-    glCompileShader(VertexShaderID);
+    std::cout << "Compiling shader : " << vertexFilePath << std::endl;
+    char const* vertexSourcePointer = vertexShaderCode.c_str();
+    glShaderSource(vertexShaderID, 1, &vertexSourcePointer, NULL);
+    glCompileShader(vertexShaderID);
 
     // Check Vertex Shader
-    glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
-    glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    if (InfoLogLength > 0) {
-        std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
-        glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-        printf("%s\n", &VertexShaderErrorMessage[0]);
+    glGetShaderiv(vertexShaderID, GL_COMPILE_STATUS, &result);
+    glGetShaderiv(vertexShaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
+    if (infoLogLength > 0) {
+        std::vector<char> vertexShaderErrorMessage(infoLogLength + 1);
+        glGetShaderInfoLog(vertexShaderID, infoLogLength, NULL, &vertexShaderErrorMessage[0]);
+        std::cout << &vertexShaderErrorMessage[0] << std::endl;
+
     }
 
     // Compile Fragment Shader
-    printf("Compiling shader : %s\n", fragment_file_path);
-    char const* FragmentSourcePointer = FragmentShaderCode.c_str();
-    glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
-    glCompileShader(FragmentShaderID);
+    std::cout << "Compiling shader : " << fragmentFilePath << std::endl;
+    char const* fragmentSourcePointer = fragmentShaderCode.c_str();
+    glShaderSource(fragmentShaderID, 1, &fragmentSourcePointer, NULL);
+    glCompileShader(fragmentShaderID);
 
     // Check Fragment Shader
-    glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
-    glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    if (InfoLogLength > 0) {
-        std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
-        glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-        printf("%s\n", &FragmentShaderErrorMessage[0]);
+    glGetShaderiv(fragmentShaderID, GL_COMPILE_STATUS, &result);
+    glGetShaderiv(fragmentShaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
+    if (infoLogLength > 0) {
+        std::vector<char> fragmentShaderErrorMessage(infoLogLength + 1);
+        glGetShaderInfoLog(fragmentShaderID, infoLogLength, NULL, &fragmentShaderErrorMessage[0]);
+        std::cout << &fragmentShaderErrorMessage[0] << std::endl;
     }
 
     // Link the program
-    printf("Linking program\n");
-    GLuint ProgramID = glCreateProgram();
-    glAttachShader(ProgramID, VertexShaderID);
-    glAttachShader(ProgramID, FragmentShaderID);
-    glLinkProgram(ProgramID);
+    std::cout << "Linking program" << std::endl;
+    GLuint programID = glCreateProgram();
+    glAttachShader(programID, vertexShaderID);
+    glAttachShader(programID, fragmentShaderID);
+    glLinkProgram(programID);
 
     // Check the program
-    glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
-    glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    if (InfoLogLength > 0) {
-        std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
-        glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-        printf("%s\n", &ProgramErrorMessage[0]);
+    glGetProgramiv(programID, GL_LINK_STATUS, &result);
+    glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
+    if (infoLogLength > 0) {
+        std::vector<char> programErrorMessage(infoLogLength + 1);
+        glGetProgramInfoLog(programID, infoLogLength, NULL, &programErrorMessage[0]);
+        std::cout << &programErrorMessage[0] << std::endl;
     }
 
-    glDetachShader(ProgramID, VertexShaderID);
-    glDetachShader(ProgramID, FragmentShaderID);
+    glDetachShader(programID, vertexShaderID);
+    glDetachShader(programID, fragmentShaderID);
 
-    glDeleteShader(VertexShaderID);
-    glDeleteShader(FragmentShaderID);
+    glDeleteShader(vertexShaderID);
+    glDeleteShader(fragmentShaderID);
 
-    return ProgramID;
+    return programID;
 }
 
 RenderGL::RenderGL() :
@@ -124,23 +123,24 @@ void RenderGL::display()
 {
     // clearing the window or remove all drawn objects    
     glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(shaderId);
+    GLuint mvpId = glGetUniformLocation(shaderId, "modelViewProjMatrix");
+    glUniformMatrix4fv(mvpId, 1, GL_FALSE, &modelViewProjMat[0][0]);
+
     // bind VBOs before drawing
     glBindBuffer(GL_ARRAY_BUFFER, vboId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboId);
 
-    GLuint mvpId = glGetUniformLocation(shaderId, "modelViewProjMatrix");
-    glUniformMatrix4fv(mvpId, 1, GL_FALSE, &modelViewProjMat[0][0]);
-
-    glUseProgram(shaderId);
     // enable vertex arrays
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
+    glEnableVertexAttribArray(0);          // activate vertex position array
+    glEnableVertexAttribArray(1);          // activate vertex normal array
 
     size_t cOffset = sizeof(float)* numPoints*3;
 
     // specify vertex arrays with their offsets
-    glVertexPointer(3, GL_FLOAT, 0, (void*)0);
-    glColorPointer(3, GL_FLOAT, 0, (void*)cOffset);
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, (void *)cOffset);
 
     // finally draw a cube with glDrawElements()
     for (int i = 0; i < numLines; ++i) {
@@ -183,7 +183,7 @@ void RenderGL::mouseDrag(int dx, int dy)
     display();
 }
 
-void RenderGL::updateData(std::vector<float>& vertices, int nLines)
+void RenderGL::updateData(std::vector<std::vector<float>> const &lines)
 {
     glDeleteBuffers(1, &vboId);
     glDeleteBuffers(1, &iboId);
@@ -192,26 +192,36 @@ void RenderGL::updateData(std::vector<float>& vertices, int nLines)
     glGenBuffersARB(1, &vboId);    // for vertex buffer
     glGenBuffers(1, &iboId);    // for index buffer
 
+    numPoints = lines.size() * lines[0].size() / 3;
+    numLines = lines.size();
+
+    std::vector<float> vertices;
     std::vector<float> colors;
     std::vector<unsigned int> indices;
-    colors.resize(vertices.size());
-    numPoints = vertices.size() / 3;
-    numLines = nLines;
+    
+    colors.resize(numPoints * 3);
     indices.resize(numPoints);
-    for (int i = 0; i < numPoints; ++i)
-    {
-        indices[i] = i;
-        float theta = 2.0 * M_PI * i / (double)numPoints;
-        if (i < numPoints / 2) {
-            colors[3 * i + 0] = 0.0;
-            colors[3 * i + 1] = 1.0;
-            colors[3 * i + 2] = 0.0;
-        }
-        else {
-            colors[3 * i + 0] = 1.0;
-            colors[3 * i + 1] = 0.0;
-            colors[3 * i + 2] = 1.0;
 
+    for (auto line : lines) {
+        vertices.insert(
+            vertices.end(),
+            std::make_move_iterator(line.begin()),
+            std::make_move_iterator(line.end())
+        );
+    }
+
+    int curVertexIndex = 0;
+    for (int curLine = 0; curLine < numLines; ++curLine) {
+        float color[3] = { rand() / (RAND_MAX + 1.0), rand() / (RAND_MAX + 1.0), rand() / (RAND_MAX + 1.0) };
+
+        int curLineVerts = lines[curLine].size() / 3;
+        for (int i = 0; i < curLineVerts; ++i)
+        {
+            indices[curVertexIndex] = curVertexIndex;
+            colors[3 * curVertexIndex + 0] = color[0];
+            colors[3 * curVertexIndex + 1] = color[1];
+            colors[3 * curVertexIndex + 2] = color[2];
+            curVertexIndex++;
         }
     }
  
