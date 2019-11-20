@@ -141,9 +141,11 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RenderGL.cpp" />
+    <ClCompile Include="ThreeBodySolver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RenderGL.h" />
+    <ClInclude Include="ThreeBodySolver.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="phase.frag" />

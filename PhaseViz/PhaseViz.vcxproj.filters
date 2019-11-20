@@ -21,9 +21,15 @@
     <ClCompile Include="RenderGL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ThreeBodySolver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RenderGL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreeBodySolver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

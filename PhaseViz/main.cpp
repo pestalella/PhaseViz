@@ -2,6 +2,7 @@
 // first include Windows.h header file which is required    
 
 #include "RenderGL.h"
+#include "ThreeBodySolver.h"
 
 #include <cmath>
 #include <GL/glew.h>
@@ -46,21 +47,29 @@ void mouseDrag(int x, int y)
 
 void generateData()
 {
-    int numLines = 500;
-    std::vector<float>::size_type numVerts = 2000;
+    int numLines = 100;
+    ThreeBodySolver solver;
+    
     std::vector<std::vector<float>> lines;
-
     for (int curLine = 0; curLine < numLines; ++curLine) {
-        std::vector<float> positions(numVerts*3);
-        int r = rand() / (RAND_MAX + 1.0) * 2.0;
-        for (int i = 0; i < numVerts; ++i) {
-            float theta = 6*2.0*M_PI*i/(double)numVerts;
-            positions[3 * i + 0] = r*cos(theta*(curLine+1)/20);
-            positions[3 * i + 1] = r*sin(theta*(curLine + 1) / r);
-            positions[3 * i + 2] = 3.0*i/numVerts + 0.001*curLine;
-        }
-        lines.push_back(positions);
+        lines.push_back(solver.randomSolution(1000));
     }
+
+
+    //std::vector<float>::size_type numVerts = 2000;
+    //std::vector<std::vector<float>> lines;
+
+    //for (int curLine = 0; curLine < numLines; ++curLine) {
+    //    std::vector<float> positions(numVerts*3);
+    //    int r = rand() / (RAND_MAX + 1.0) * 2.0;
+    //    for (int i = 0; i < numVerts; ++i) {
+    //        float theta = 6*2.0*M_PI*i/(double)numVerts;
+    //        positions[3 * i + 0] = r*cos(theta*(curLine+1)/20);
+    //        positions[3 * i + 1] = r*sin(theta*(curLine + 1) / r);
+    //        positions[3 * i + 2] = 3.0*i/numVerts + 0.001*curLine;
+    //    }
+    //    lines.push_back(positions);
+    //}
     phaseRender->updateData(lines);
 }
 
