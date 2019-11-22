@@ -9,6 +9,7 @@
 #include <gl/glut.h>
 #include <iostream>
 #include <memory>
+#include <ctime>
 
 const double M_PI = 3.141592653589793238462643;
 
@@ -45,14 +46,30 @@ void mouseDrag(int x, int y)
     phaseRender->mouseDrag(offsetX, offsetY);
 }
 
+void mouseClick(int button, int state, int x, int y)
+{
+    if (state == GLUT_UP) return; // Disregard redundant GLUT_UP events
+    // Wheel reports as button 3(scroll up) and button 4(scroll down)
+    if (button == 3) { // It's a wheel event
+        phaseRender->moveBackward();
+    } else if (button == 4) {
+        phaseRender->moveForward();
+    }
+}
+
+
 void generateData()
 {
+    std::cout << "Generating data..." << std::endl;
     int numLines = 100;
     ThreeBodySolver solver;
     
     std::vector<std::vector<float>> lines;
     for (int curLine = 0; curLine < numLines; ++curLine) {
-        lines.push_back(solver.randomSolution(1000));
+        auto orbits = solver.randomSolution(2000);
+        for (auto line : orbits) {
+            lines.push_back(line);
+        }
     }
 
 
@@ -70,12 +87,16 @@ void generateData()
     //    }
     //    lines.push_back(positions);
     //}
+    std::cout << "Sending data to renderer." << std::endl;
     phaseRender->updateData(lines);
 }
+
+
 
 // main function    
 int main(int argc, char** argv)
 {
+    srand(time(NULL));
     // initialize glut    
     glutInit(&argc, argv);
 
@@ -97,7 +118,7 @@ int main(int argc, char** argv)
     // call glutReshapeFunc() function & pass parameter as Reshape() function    
     glutReshapeFunc(reshape);
     glutMotionFunc(mouseDrag);
-    //glutMainLoop() is used to redisplay the objects    
+    glutMouseFunc(mouseClick);
     glutMainLoop();
     return 0;
 }

@@ -103,11 +103,12 @@ RenderGL::RenderGL() :
     vboId(0),
     iboId(0),
     shaderId(0),
+    eye(-0.3, 0.5, 5.0),
     modelMat(glm::mat4(1.0f)),
     modelMatInv(glm::mat4(1.0f)),
-    viewMat(glm::mat4(1.0f)),
+    modelViewProjMat(glm::mat4(1.0f)),
     projMat(glm::mat4(1.0f)),
-    modelViewProjMat(glm::mat4(1.0f))
+    viewMat(glm::mat4(1.0f))
 {
     shaderId = loadShaders("rotate.vert", "phase.frag");
 }
@@ -134,13 +135,16 @@ void RenderGL::display()
 
     // enable vertex arrays
     glEnableVertexAttribArray(0);          // activate vertex position array
-    glEnableVertexAttribArray(1);          // activate vertex normal array
+    glEnableVertexAttribArray(1);          // activate vertex color array
+    glEnableVertexAttribArray(2);          // activate vertex normal array
 
-    size_t cOffset = sizeof(float)* numPoints*3;
+    size_t cOffset = sizeof(float) * numPoints * 3;
+    size_t nOffset = sizeof(float) * numPoints * 3 + cOffset;
 
     // specify vertex arrays with their offsets
     glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, (void *)cOffset);
+    glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, (void*)cOffset);
+    glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, (void*)nOffset);
 
     // finally draw a cube with glDrawElements()
     for (int i = 0; i < numLines; ++i) {
@@ -151,8 +155,9 @@ void RenderGL::display()
             (void *)indexOffset);         // offset to indices
     }
     // disable vertex arrays
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
 
     // unbind VBOs
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -165,8 +170,8 @@ void RenderGL::reshape(int width, int height)
     //adjusts the pixel rectangle for drawing to be the entire new window    
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 
-    projMat = glm::perspective((float)(60.0*M_PI/180), (GLfloat)width / (GLfloat)height, 0.5f, 20.0f);
-    viewMat = glm::lookAt(glm::vec3(-0.3, 0.5, 5.0), 
+    projMat = glm::perspective((float)(60.0*M_PI/180), (GLfloat)width / (GLfloat)height, 0.5f, 2000.0f);
+    viewMat = glm::lookAt(eye, 
                           glm::vec3( 0.0, 0.0, 0.0), 
                           glm::vec3( 0.0, 1.0, 0.0));
     modelViewProjMat = projMat * viewMat * modelMat;
@@ -179,6 +184,26 @@ void RenderGL::mouseDrag(int dx, int dy)
     modelMat = glm::rotate(modelMat, rotX, glm::vec3(modelMatInv * glm::vec4(0.0, 1.0, 0.0, 0.0)));
     modelMat = glm::rotate(modelMat, rotY, glm::vec3(modelMatInv * glm::vec4(1.0, 0.0, 0.0, 0.0)));
     modelMatInv = glm::inverse(modelMat);
+    modelViewProjMat = projMat * viewMat * modelMat;
+    display();
+}
+
+void RenderGL::moveForward()
+{
+    eye += glm::vec3(0,0,1);
+    viewMat = glm::lookAt(eye,
+        glm::vec3(0.0, 0.0, 0.0),
+        glm::vec3(0.0, 1.0, 0.0));
+    modelViewProjMat = projMat * viewMat * modelMat;
+    display();
+}
+
+void RenderGL::moveBackward()
+{
+    eye += glm::vec3(0, 0, -1);
+    viewMat = glm::lookAt(eye,
+        glm::vec3(0.0, 0.0, 0.0),
+        glm::vec3(0.0, 1.0, 0.0));
     modelViewProjMat = projMat * viewMat * modelMat;
     display();
 }
@@ -197,9 +222,11 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines)
 
     std::vector<float> vertices;
     std::vector<float> colors;
+    std::vector<float> normals;
     std::vector<unsigned int> indices;
     
     colors.resize(numPoints * 3);
+    normals.resize(numPoints * 3);
     indices.resize(numPoints);
 
     for (auto line : lines) {
@@ -218,9 +245,24 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines)
         for (int i = 0; i < curLineVerts; ++i)
         {
             indices[curVertexIndex] = curVertexIndex;
-            colors[3 * curVertexIndex + 0] = color[0];
-            colors[3 * curVertexIndex + 1] = color[1];
-            colors[3 * curVertexIndex + 2] = color[2];
+            int attribIndex = 3 * curVertexIndex + 0;
+            colors[attribIndex + 0] = color[0];
+            colors[attribIndex + 1] = color[1];
+            colors[attribIndex + 2] = color[2];
+
+            if (i != curLineVerts - 1) {
+                // Well, those are tangents
+                normals[attribIndex + 0] = vertices[attribIndex + 3 + 0] - vertices[attribIndex + 0];
+                normals[attribIndex + 1] = vertices[attribIndex + 3 + 1] - vertices[attribIndex + 1];
+                normals[attribIndex + 2] = vertices[attribIndex + 3 + 2] - vertices[attribIndex + 2];
+            } else { 
+                // The last normal is a copy of the previous one
+                normals[attribIndex + 0] = normals[attribIndex - 3 + 0];
+                normals[attribIndex + 1] = normals[attribIndex - 3 + 1];
+                normals[attribIndex + 2] = normals[attribIndex - 3 + 2];
+
+            }
+
             curVertexIndex++;
         }
     }
@@ -228,11 +270,13 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines)
     // copy vertex attribs data to VBO
     glBindBuffer(GL_ARRAY_BUFFER, vboId);
     // reserve space
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (vertices.size() + colors.size()), 0, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (vertices.size() + colors.size() + normals.size()), 0, GL_STATIC_DRAW);
     // copy positions
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * vertices.size(), &vertices[0]);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float)*vertices.size(), &vertices[0]);
     // copy colors
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), sizeof(float) * colors.size(), &colors[0]);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(float)*vertices.size(), sizeof(float)*colors.size(), &colors[0]);
+    // copy normals
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(float)*vertices.size() + sizeof(float) * colors.size(), sizeof(float)*normals.size(), &normals[0]);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboId);

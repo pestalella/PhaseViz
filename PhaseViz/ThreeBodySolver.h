@@ -36,7 +36,7 @@ class ThreeBodySolver
 {
 public:
     ThreeBodySolver();
-    std::vector<float> randomSolution(int numSteps);
+    std::vector<std::vector<float>> randomSolution(int numSteps);
 
 private:
     Projection p;

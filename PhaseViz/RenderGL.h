@@ -11,6 +11,8 @@ public:
     void display();
     void reshape(int width, int height);
     void mouseDrag(int dx, int dy);
+    void moveForward();
+    void moveBackward();
     void updateData(std::vector<std::vector<float>> const& lines);
 
 private:
@@ -21,10 +23,11 @@ private:
     GLuint iboId;
     GLuint shaderId;
 
-    glm::mat4 projMat;
+    glm::vec3 eye;
     glm::mat4 modelMat;
     glm::mat4 modelMatInv;
-    glm::mat4 viewMat;
     glm::mat4 modelViewProjMat;
+    glm::mat4 projMat;
+    glm::mat4 viewMat;
 };
 

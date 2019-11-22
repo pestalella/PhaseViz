@@ -60,15 +60,15 @@ glm::vec3 Projection::phaseSpaceToVizSpace(Body const& b1, Body const& b2, Body 
 glm::vec3 randomVector(float scale=1.0) 
 {
     return glm::vec3(
-        (rand() / (RAND_MAX + 1.0) - 0.5) * scale,
-        (rand() / (RAND_MAX + 1.0) - 0.5) * scale,
-        (rand() / (RAND_MAX + 1.0) - 0.5) * scale);
+        (rand()/(RAND_MAX + 1.0) - 0.5) * scale,
+        (rand()/(RAND_MAX + 1.0) - 0.5) * scale,
+        (rand()/(RAND_MAX + 1.0) - 0.5) * scale);
 }
 
 
 Body randomBody()
 {
-    return { randomVector(5.0), randomVector(5.0) };
+    return { randomVector(100.0), glm::vec3(0)/*randomVector(100.0)*/ };
 }
 
 SystemAccels computeAccelerations(Body const &b1, Body const& b2, Body const& b3)
@@ -87,16 +87,36 @@ ThreeBodySolver::ThreeBodySolver()
 {
 }
 
-std::vector<float> ThreeBodySolver::randomSolution(int numSteps)
+std::vector<std::vector<float>>  ThreeBodySolver::randomSolution(int numPoints)
 {
     std::vector<float> orbitVertices;
-    Body b1 = randomBody(), 
+    //std::vector<float> orbitVertices1;
+    //std::vector<float> orbitVertices2;
+    //std::vector<float> orbitVertices3;
+
+    Body b1 = randomBody(),
          b2 = randomBody(), 
          b3 = randomBody();
     
+    glm::vec3 center = 1 / 3.0f * (b1.position + b2.position + b3.position);
+//    glm::vec3 velocity = 1 / 3.0f * (b1.velocity + b2.velocity + b3.velocity);
+    glm::vec3 velocity(0);
+
+    // Center the system around the origin of coords
+    b1.position -= center;
+    b2.position -= center;
+    b3.position -= center;
+    // Remove system velocity
+    b1.velocity -= velocity;
+    b2.velocity -= velocity;
+    b3.velocity -= velocity;
+
     float tStep = 0.1;
 
-    for (int i = 0; i < numSteps; ++i) {
+    int numSteps = 0;
+
+    //for (int i = 0; i < numSteps; ++i) {
+    while (orbitVertices.size() < numPoints) {
         auto accels = computeAccelerations(b1, b2, b3);
         b1.position += tStep * (b1.velocity + tStep / 2 * accels.a1);
         b2.position += tStep * (b2.velocity + tStep / 2 * accels.a2);
@@ -106,11 +126,27 @@ std::vector<float> ThreeBodySolver::randomSolution(int numSteps)
         b2.velocity += tStep / 2 * (accels.a2 + newAccels.a2);
         b3.velocity += tStep / 2 * (accels.a3 + newAccels.a3);
 
-        auto projected = p.phaseSpaceToVizSpace(b1, b2, b3);
-        orbitVertices.push_back(projected[0]);
-        orbitVertices.push_back(projected[1]);
-        orbitVertices.push_back(projected[2]);
+        numSteps++;
+//        if (numSteps % 10 == 1) {
+            auto projected = p.phaseSpaceToVizSpace(b1, b2, b3);
+            orbitVertices.push_back(projected[0]);
+            orbitVertices.push_back(projected[1]);
+            orbitVertices.push_back(projected[2]);
+//        }
+
+        //orbitVertices1.push_back(b1.position[0]);
+        //orbitVertices1.push_back(b1.position[1]);
+        //orbitVertices1.push_back(b1.position[2]);
+
+        //orbitVertices2.push_back(b2.position[0]);
+        //orbitVertices2.push_back(b2.position[1]);
+        //orbitVertices2.push_back(b2.position[2]);
+
+        //orbitVertices3.push_back(b3.position[0]);
+        //orbitVertices3.push_back(b3.position[1]);
+        //orbitVertices3.push_back(b3.position[2]);
+
     }
 
-    return orbitVertices;
+    return std::vector<std::vector<float>>({orbitVertices});
 }
