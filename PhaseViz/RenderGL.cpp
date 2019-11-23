@@ -7,6 +7,8 @@
 #include <iostream>
 #include <sstream>
 
+//#pragma warning(disable:C26451)
+
 const double M_PI = 3.141592653589793238462643;
 
 GLuint loadShaders(std::string const &vertexFilePath, std::string const &fragmentFilePath)
@@ -123,7 +125,7 @@ RenderGL::~RenderGL()
 void RenderGL::display()
 {
     // clearing the window or remove all drawn objects    
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(shaderId);
     GLuint mvpId = glGetUniformLocation(shaderId, "modelViewProjMatrix");
@@ -167,10 +169,11 @@ void RenderGL::display()
 
 void RenderGL::reshape(int width, int height)
 {
+    std::cout << "Reshape called. width=" << width << " height=" << height << std::endl;
     //adjusts the pixel rectangle for drawing to be the entire new window    
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 
-    projMat = glm::perspective((float)(60.0*M_PI/180), (GLfloat)width / (GLfloat)height, 0.5f, 2000.0f);
+    projMat = glm::perspective((float)(15.0*M_PI/180), (GLfloat)width / (GLfloat)height, 0.1f, 2000.0f);
     viewMat = glm::lookAt(eye, 
                           glm::vec3( 0.0, 0.0, 0.0), 
                           glm::vec3( 0.0, 1.0, 0.0));
@@ -190,7 +193,8 @@ void RenderGL::mouseDrag(int dx, int dy)
 
 void RenderGL::moveForward()
 {
-    eye += glm::vec3(0,0,1);
+    float step = eye.z * 0.1;
+    eye += glm::vec3(0,0,step);
     viewMat = glm::lookAt(eye,
         glm::vec3(0.0, 0.0, 0.0),
         glm::vec3(0.0, 1.0, 0.0));
@@ -200,7 +204,8 @@ void RenderGL::moveForward()
 
 void RenderGL::moveBackward()
 {
-    eye += glm::vec3(0, 0, -1);
+    float step = eye.z * 0.1;
+    eye += glm::vec3(0, 0, -step);
     viewMat = glm::lookAt(eye,
         glm::vec3(0.0, 0.0, 0.0),
         glm::vec3(0.0, 1.0, 0.0));
@@ -223,10 +228,12 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines)
     std::vector<float> vertices;
     std::vector<float> colors;
     std::vector<float> normals;
+    std::vector<float> tangents;
     std::vector<unsigned int> indices;
     
     colors.resize(numPoints * 3);
     normals.resize(numPoints * 3);
+    tangents.resize(numPoints * 3);
     indices.resize(numPoints);
 
     for (auto line : lines) {
@@ -236,7 +243,11 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines)
             std::make_move_iterator(line.end())
         );
     }
-
+    std::cout << "== Stats:" << std::endl;
+    std::cout << "==              Num. lines:" << lines.size() << std::endl;
+    std::cout << "==    Num. verts per lines:" << lines[0].size() << std::endl;
+    std::cout << "==          Total vertices:" << numPoints << std::endl;
+    std::cout << "== Computing normals..." << std::endl;
     int curVertexIndex = 0;
     for (int curLine = 0; curLine < numLines; ++curLine) {
         float color[3] = { rand() / (RAND_MAX + 1.0), rand() / (RAND_MAX + 1.0), rand() / (RAND_MAX + 1.0) };
@@ -252,21 +263,35 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines)
 
             if (i != curLineVerts - 1) {
                 // Well, those are tangents
-                normals[attribIndex + 0] = vertices[attribIndex + 3 + 0] - vertices[attribIndex + 0];
-                normals[attribIndex + 1] = vertices[attribIndex + 3 + 1] - vertices[attribIndex + 1];
-                normals[attribIndex + 2] = vertices[attribIndex + 3 + 2] - vertices[attribIndex + 2];
+                tangents[attribIndex + 0] = vertices[attribIndex + 3 + 0] - vertices[attribIndex + 0];
+                tangents[attribIndex + 1] = vertices[attribIndex + 3 + 1] - vertices[attribIndex + 1];
+                tangents[attribIndex + 2] = vertices[attribIndex + 3 + 2] - vertices[attribIndex + 2];
             } else { 
-                // The last normal is a copy of the previous one
-                normals[attribIndex + 0] = normals[attribIndex - 3 + 0];
-                normals[attribIndex + 1] = normals[attribIndex - 3 + 1];
-                normals[attribIndex + 2] = normals[attribIndex - 3 + 2];
+                // The last tangent
+                tangents[attribIndex + 0] = 2*tangents[attribIndex - 3 + 0] - tangents[attribIndex - 6 + 0];
+                tangents[attribIndex + 1] = 2*tangents[attribIndex - 3 + 1] - tangents[attribIndex - 6 + 1];
+                tangents[attribIndex + 2] = 2*tangents[attribIndex - 3 + 2] - tangents[attribIndex - 6 + 2];
 
             }
-
             curVertexIndex++;
         }
+
+        for (int i = 0; i < numPoints-1; ++i) {
+            glm::vec3 t1(tangents[3 * i + 0], tangents[3 * i + 1], tangents[3 * i + 2]);
+            glm::vec3 t2(tangents[3 * (i+1) + 0], tangents[3 * (i+1) + 1], tangents[3 * (i+1) + 2]);
+            glm::vec3 up = glm::normalize(glm::cross(t1, t2));
+            glm::vec3 normal = glm::normalize(glm::cross(t1, up));
+            normals[3 * i + 0] = normal[0];
+            normals[3 * i + 1] = normal[1];
+            normals[3 * i + 2] = normal[2];
+        }
+        normals[3*(numPoints - 1) + 0] = normals[3*(numPoints - 2) + 0];
+        normals[3*(numPoints - 1) + 1] = normals[3*(numPoints - 2) + 1];
+        normals[3*(numPoints - 1) + 2] = normals[3*(numPoints - 2) + 2];
     }
  
+    std::cout << "== Normals computed. Sending data to the GPU." << std::endl;
+
     // copy vertex attribs data to VBO
     glBindBuffer(GL_ARRAY_BUFFER, vboId);
     // reserve space

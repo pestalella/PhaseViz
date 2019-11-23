@@ -30,27 +30,36 @@ void reshape(int w, int h)
 void initGLRendering()
 {
     // set background color to Black    
-    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClearColor(0.0, 0.0, 1.0, 0.0);
     // set shade model to Flat    
     glShadeModel(GL_FLAT);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthRange(0.1, 2000.0);
+
     phaseRender = std::make_shared<RenderGL>();
 }
 
+int dragPrevX = 0, dragPrevY = 0;
+
 void mouseDrag(int x, int y)
 {
-    static int prevX = 0, prevY = 0;
-    int offsetX = x - prevX;
-    int offsetY = y - prevY;
-    prevX = x;
-    prevY = y;
+    int offsetX = x - dragPrevX;
+    int offsetY = y - dragPrevY;
+    dragPrevX = x;
+    dragPrevY = y;
     phaseRender->mouseDrag(offsetX, offsetY);
 }
 
 void mouseClick(int button, int state, int x, int y)
 {
     if (state == GLUT_UP) return; // Disregard redundant GLUT_UP events
-    // Wheel reports as button 3(scroll up) and button 4(scroll down)
-    if (button == 3) { // It's a wheel event
+    if (button == 0) {
+        // Drag started.
+        dragPrevX = x;
+        dragPrevY = y;
+    } else if (button == 3) { 
+        // Wheel reports as button 3(scroll up) and button 4(scroll down)
         phaseRender->moveBackward();
     } else if (button == 4) {
         phaseRender->moveForward();
@@ -61,12 +70,12 @@ void mouseClick(int button, int state, int x, int y)
 void generateData()
 {
     std::cout << "Generating data..." << std::endl;
-    int numLines = 100;
+    int numLines = 1;
     ThreeBodySolver solver;
     
     std::vector<std::vector<float>> lines;
     for (int curLine = 0; curLine < numLines; ++curLine) {
-        auto orbits = solver.randomSolution(2000);
+        auto orbits = solver.randomSolution(40000);
         for (auto line : orbits) {
             lines.push_back(line);
         }

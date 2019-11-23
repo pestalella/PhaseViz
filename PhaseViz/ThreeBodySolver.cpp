@@ -68,7 +68,7 @@ glm::vec3 randomVector(float scale=1.0)
 
 Body randomBody()
 {
-    return { randomVector(100.0), glm::vec3(0)/*randomVector(100.0)*/ };
+    return { randomVector(0.3), glm::vec3(0)/*randomVector(100.0)*/ };
 }
 
 SystemAccels computeAccelerations(Body const &b1, Body const& b2, Body const& b3)
@@ -97,9 +97,17 @@ std::vector<std::vector<float>>  ThreeBodySolver::randomSolution(int numPoints)
     Body b1 = randomBody(),
          b2 = randomBody(), 
          b3 = randomBody();
-    
+ 
+    const glm::vec3 bias1(1, -1, 0);
+    const glm::vec3 bias2(2, 0, 0);
+    const glm::vec3 bias3(1, 1, 0);
+    b1.position += bias1;
+    b2.position += bias2;
+    b3.position += bias3;
+
     glm::vec3 center = 1 / 3.0f * (b1.position + b2.position + b3.position);
 //    glm::vec3 velocity = 1 / 3.0f * (b1.velocity + b2.velocity + b3.velocity);
+//    glm::vec3 center(0);
     glm::vec3 velocity(0);
 
     // Center the system around the origin of coords
@@ -111,12 +119,13 @@ std::vector<std::vector<float>>  ThreeBodySolver::randomSolution(int numPoints)
     b2.velocity -= velocity;
     b3.velocity -= velocity;
 
-    float tStep = 0.1;
+    float tStep = 0.5;
 
     int numSteps = 0;
+    int numVerts = 0;
 
     //for (int i = 0; i < numSteps; ++i) {
-    while (orbitVertices.size() < numPoints) {
+    while (numVerts < numPoints) {
         auto accels = computeAccelerations(b1, b2, b3);
         b1.position += tStep * (b1.velocity + tStep / 2 * accels.a1);
         b2.position += tStep * (b2.velocity + tStep / 2 * accels.a2);
@@ -132,6 +141,7 @@ std::vector<std::vector<float>>  ThreeBodySolver::randomSolution(int numPoints)
             orbitVertices.push_back(projected[0]);
             orbitVertices.push_back(projected[1]);
             orbitVertices.push_back(projected[2]);
+            numVerts++;
 //        }
 
         //orbitVertices1.push_back(b1.position[0]);
