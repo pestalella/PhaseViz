@@ -15,9 +15,9 @@ void Projection::createMatrix()
         rowY[i] = rand() / (RAND_MAX + 1.0);
         rowZ[i] = rand() / (RAND_MAX + 1.0);
     }
-    float sX = 1.0 / std::accumulate(rowX.begin(), rowX.end(), 0.0);
-    float sY = 1.0 / std::accumulate(rowY.begin(), rowY.end(), 0.0);
-    float sZ = 1.0 / std::accumulate(rowZ.begin(), rowZ.end(), 0.0);
+    double sX = 1.0 / std::accumulate(rowX.begin(), rowX.end(), 0.0);
+    double sY = 1.0 / std::accumulate(rowY.begin(), rowY.end(), 0.0);
+    double sZ = 1.0 / std::accumulate(rowZ.begin(), rowZ.end(), 0.0);
 
     for (int i = 0; i < 18; ++i) {
         rowX[i] *= sX;
@@ -26,9 +26,9 @@ void Projection::createMatrix()
     }
 }
 
-glm::vec3 Projection::phaseSpaceToVizSpace(Body const& b1, Body const& b2, Body const& b3)
+glm::dvec3 Projection::phaseSpaceToVizSpace(Body const& b1, Body const& b2, Body const& b3)
 {
-    std::vector<float> phaseSpacePoint(18);  // 18 dims
+    std::vector<double> phaseSpacePoint(18);  // 18 dims
 
     phaseSpacePoint[0] = b1.position[0];
     phaseSpacePoint[1] = b1.position[1];
@@ -51,15 +51,21 @@ glm::vec3 Projection::phaseSpaceToVizSpace(Body const& b1, Body const& b2, Body 
     phaseSpacePoint[16] = b3.velocity[1];
     phaseSpacePoint[17] = b3.velocity[2];
 
-    float x = std::inner_product(std::begin(phaseSpacePoint), std::end(phaseSpacePoint), std::begin(rowX), 0.0);
-    float y = std::inner_product(std::begin(phaseSpacePoint), std::end(phaseSpacePoint), std::begin(rowY), 0.0);
-    float z = std::inner_product(std::begin(phaseSpacePoint), std::end(phaseSpacePoint), std::begin(rowZ), 0.0);
+    float x = static_cast<float>(std::inner_product(std::begin(phaseSpacePoint), 
+                                                    std::end(phaseSpacePoint), 
+                                                    std::begin(rowX), 0.0));
+    float y = static_cast<float>(std::inner_product(std::begin(phaseSpacePoint),
+                                                    std::end(phaseSpacePoint),
+                                                    std::begin(rowY), 0.0));
+    float z = static_cast<float>(std::inner_product(std::begin(phaseSpacePoint),
+                                                    std::end(phaseSpacePoint),
+                                                    std::begin(rowZ), 0.0));
 
     return glm::vec3(x, y, z);
 }
-glm::vec3 randomVector(float scale=1.0) 
+glm::dvec3 randomVector(float scale=1.0) 
 {
-    return glm::vec3(
+    return glm::dvec3(
         (rand()/(RAND_MAX + 1.0) - 0.5) * scale,
         (rand()/(RAND_MAX + 1.0) - 0.5) * scale,
         (rand()/(RAND_MAX + 1.0) - 0.5) * scale);
@@ -68,18 +74,18 @@ glm::vec3 randomVector(float scale=1.0)
 
 Body randomBody()
 {
-    return { randomVector(0.3), glm::vec3(0)/*randomVector(100.0)*/ };
+    return { randomVector(0.3f), glm::dvec3(0)/*randomVector(100.0)*/ };
 }
 
 SystemAccels computeAccelerations(Body const &b1, Body const& b2, Body const& b3)
 {
-    glm::vec3 dir12 = b2.position - b1.position;
-    glm::vec3 dir13 = b3.position - b1.position;
-    glm::vec3 dir23 = b3.position - b2.position;
+    glm::dvec3 dir12 = b2.position - b1.position;
+    glm::dvec3 dir13 = b3.position - b1.position;
+    glm::dvec3 dir23 = b3.position - b2.position;
     SystemAccels result;
-    result.a1 = dir12 * (float)( 1.0 / pow(dir12.length(), 3)) + dir13 * (float)( 1.0 / pow(dir13.length(), 3));
-    result.a2 = dir23 * (float)( 1.0 / pow(dir23.length(), 3)) + dir12 * (float)(-1.0 / pow(dir12.length(), 3));
-    result.a3 = dir13 * (float)(-1.0 / pow(dir13.length(), 3)) + dir23 * (float)(-1.0 / pow(dir23.length(), 3));
+    result.a1 = dir12 * ( 1.0 / pow(dir12.length(), 3)) + dir13 * ( 1.0 / pow(dir13.length(), 3));
+    result.a2 = dir23 * ( 1.0 / pow(dir23.length(), 3)) + dir12 * (-1.0 / pow(dir12.length(), 3));
+    result.a3 = dir13 * (-1.0 / pow(dir13.length(), 3)) + dir23 * (-1.0 / pow(dir23.length(), 3));
     return result;
 }
 
@@ -98,17 +104,17 @@ std::vector<std::vector<float>>  ThreeBodySolver::randomSolution(int numPoints)
          b2 = randomBody(), 
          b3 = randomBody();
  
-    const glm::vec3 bias1(1, -1, 0);
-    const glm::vec3 bias2(2, 0, 0);
-    const glm::vec3 bias3(1, 1, 0);
+    const glm::dvec3 bias1(1, -1, 0);
+    const glm::dvec3 bias2(2, 0, 0);
+    const glm::dvec3 bias3(1, 1, 0);
     b1.position += bias1;
     b2.position += bias2;
     b3.position += bias3;
 
-    glm::vec3 center = 1 / 3.0f * (b1.position + b2.position + b3.position);
-//    glm::vec3 velocity = 1 / 3.0f * (b1.velocity + b2.velocity + b3.velocity);
-//    glm::vec3 center(0);
-    glm::vec3 velocity(0);
+    glm::dvec3 center = 1 / 3.0 * (b1.position + b2.position + b3.position);
+//    glm::dvec3 velocity = 1 / 3.0f * (b1.velocity + b2.velocity + b3.velocity);
+//    glm::dvec3 center(0);
+    glm::dvec3 velocity(0);
 
     // Center the system around the origin of coords
     b1.position -= center;
@@ -119,7 +125,7 @@ std::vector<std::vector<float>>  ThreeBodySolver::randomSolution(int numPoints)
     b2.velocity -= velocity;
     b3.velocity -= velocity;
 
-    float tStep = 0.5;
+    double tStep = 0.5;
 
     int numSteps = 0;
     int numVerts = 0;
@@ -138,9 +144,9 @@ std::vector<std::vector<float>>  ThreeBodySolver::randomSolution(int numPoints)
         numSteps++;
 //        if (numSteps % 10 == 1) {
             auto projected = p.phaseSpaceToVizSpace(b1, b2, b3);
-            orbitVertices.push_back(projected[0]);
-            orbitVertices.push_back(projected[1]);
-            orbitVertices.push_back(projected[2]);
+            orbitVertices.push_back(static_cast<float>(projected[0]));
+            orbitVertices.push_back(static_cast<float>(projected[1]));
+            orbitVertices.push_back(static_cast<float>(projected[2]));
             numVerts++;
 //        }
 

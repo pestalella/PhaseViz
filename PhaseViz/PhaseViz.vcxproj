@@ -76,7 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Program Files\freeglut\include;D:\Program Files\glew-2.1.0\include;D:\Program Files\glm-0.9.9.6</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Pau\source\repos\glm;C:\Users\Pau\source\repos\freeglut-3.2.1\include;C:\Users\Pau\source\repos\glew-2.1.0\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -91,11 +91,11 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Program Files\freeglut\include;D:\Program Files\glew-2.1.0\include;D:\Program Files\glm-0.9.9.6</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Pau\source\repos\freeglut\include;C:\Users\Pau\source\repos\glm;C:\Users\Pau\source\repos\glew-2.1.0\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>D:\Program Files\glew-2.1.0\lib\Release\x64;D:\Program Files\freeglut\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\Pau\source\repos\glew-2.1.0\lib\Release\x64;C:\Users\Pau\source\repos\freeglut\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
       <AdditionalDependencies>glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>

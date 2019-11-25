@@ -154,7 +154,7 @@ void RenderGL::display()
         glDrawElements(GL_LINE_STRIP,
             numPoints/numLines,
             GL_UNSIGNED_INT,         // data type
-            (void *)indexOffset);         // offset to indices
+            (void *)static_cast<intptr_t>(indexOffset));         // offset to indices
     }
     // disable vertex arrays
     glDisableVertexAttribArray(0);
@@ -182,8 +182,8 @@ void RenderGL::reshape(int width, int height)
 
 void RenderGL::mouseDrag(int dx, int dy)
 {
-    float rotX = dx * M_PI / 180.0;
-    float rotY = dy * M_PI / 180.0;
+    float rotX = static_cast<float>(dx * M_PI / 180.0);
+    float rotY = static_cast<float>(dy * M_PI / 180.0);
     modelMat = glm::rotate(modelMat, rotX, glm::vec3(modelMatInv * glm::vec4(0.0, 1.0, 0.0, 0.0)));
     modelMat = glm::rotate(modelMat, rotY, glm::vec3(modelMatInv * glm::vec4(1.0, 0.0, 0.0, 0.0)));
     modelMatInv = glm::inverse(modelMat);
@@ -193,7 +193,7 @@ void RenderGL::mouseDrag(int dx, int dy)
 
 void RenderGL::moveForward()
 {
-    float step = eye.z * 0.1;
+    float step = eye.z * 0.1f;
     eye += glm::vec3(0,0,step);
     viewMat = glm::lookAt(eye,
         glm::vec3(0.0, 0.0, 0.0),
@@ -204,7 +204,7 @@ void RenderGL::moveForward()
 
 void RenderGL::moveBackward()
 {
-    float step = eye.z * 0.1;
+    float step = eye.z * 0.1f;
     eye += glm::vec3(0, 0, -step);
     viewMat = glm::lookAt(eye,
         glm::vec3(0.0, 0.0, 0.0),
@@ -222,8 +222,8 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines)
     glGenBuffersARB(1, &vboId);    // for vertex buffer
     glGenBuffers(1, &iboId);    // for index buffer
 
-    numPoints = lines.size() * lines[0].size() / 3;
-    numLines = lines.size();
+    numPoints = static_cast<int>(lines.size() * lines[0].size() / 3);
+    numLines = static_cast<int>(lines.size());
 
     std::vector<float> vertices;
     std::vector<float> colors;
@@ -250,9 +250,9 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines)
     std::cout << "== Computing normals..." << std::endl;
     int curVertexIndex = 0;
     for (int curLine = 0; curLine < numLines; ++curLine) {
-        float color[3] = { rand() / (RAND_MAX + 1.0), rand() / (RAND_MAX + 1.0), rand() / (RAND_MAX + 1.0) };
+        float color[3] = { rand() / (RAND_MAX + 1.0f), rand() / (RAND_MAX + 1.0f), rand() / (RAND_MAX + 1.0f) };
 
-        int curLineVerts = lines[curLine].size() / 3;
+        int curLineVerts = static_cast<int>(lines[curLine].size() / 3);
         for (int i = 0; i < curLineVerts; ++i)
         {
             indices[curVertexIndex] = curVertexIndex;

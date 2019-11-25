@@ -7,13 +7,13 @@
 
 struct Body
 {
-    glm::vec3 position;
-    glm::vec3 velocity;
+    glm::dvec3 position;
+    glm::dvec3 velocity;
 };
 
 struct SystemAccels
 {
-    glm::vec3 a1, a2, a3;
+    glm::dvec3 a1, a2, a3;
 };
 
 
@@ -24,12 +24,12 @@ public:
 
     void createMatrix();
 
-    glm::vec3 phaseSpaceToVizSpace(Body const& b1, Body const& b2, Body const& b3);
+    glm::dvec3 phaseSpaceToVizSpace(Body const& b1, Body const& b2, Body const& b3);
 
 private:
-    std::vector<float> rowX;
-    std::vector<float> rowY;
-    std::vector<float> rowZ;
+    std::vector<double> rowX;
+    std::vector<double> rowY;
+    std::vector<double> rowZ;
 };
 
 class ThreeBodySolver
