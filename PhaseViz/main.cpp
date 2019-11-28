@@ -1,133 +1,115 @@
-#include<Windows.h>    
-// first include Windows.h header file which is required    
+#include <Windows.h>
+// first include Windows.h header file which is required
 
 #include "RenderGL.h"
 #include "ThreeBodySolver.h"
 
-#include <cmath>
 #include <GL/glew.h>
 #include <gl/glut.h>
+#include <cmath>
+#include <ctime>
 #include <iostream>
 #include <memory>
-#include <ctime>
 
 const double M_PI = 3.141592653589793238462643;
 
 std::shared_ptr<RenderGL> phaseRender;
 
-// Display_Objects() function    
-void display(void)
-{
-    phaseRender->display();
+void generateData() {
+  std::cout << "Generating data..." << std::endl;
+  int numLines = 100;
+  ThreeBodySolver solver;
+
+  std::vector<std::vector<float>> lines;
+  std::vector<std::vector<float>> colors;
+  for (int curLine = 0; curLine < numLines; ++curLine) {
+    auto orbits = solver.randomSolution(4000);
+    lines.push_back(orbits[0]);
+    colors.push_back(orbits[1]);
+  }
+
+  std::cout << "Sending data to renderer." << std::endl;
+  phaseRender->updateData(lines, colors);
 }
 
-
-void reshape(int w, int h)
+void updateRender(void) 
 {
-    phaseRender->reshape(w, h);
+  Sleep(100);
+  phaseRender->update();
 }
 
-void initGLRendering()
-{
-    // set background color to Black    
-    glClearColor(0.0, 0.0, 1.0, 0.0);
-    // set shade model to Flat    
-    glShadeModel(GL_FLAT);
+void display(void) 
+{ 
+    phaseRender->display(); 
+}
 
-    glEnable(GL_DEPTH_TEST);
-    glDepthRange(0.1, 2000.0);
+void reshape(int w, int h) { phaseRender->reshape(w, h); }
 
-    phaseRender = std::make_shared<RenderGL>();
+void initGLRendering() {
+  // set background color to Black
+  glClearColor(0.0, 0.0, 1.0, 0.0);
+  // set shade model to Flat
+  glShadeModel(GL_FLAT);
+
+  glEnable(GL_DEPTH_TEST);
+  glDepthRange(0.1, 2000.0);
+
+  phaseRender = std::make_shared<RenderGL>();
 }
 
 int dragPrevX = 0, dragPrevY = 0;
 
-void mouseDrag(int x, int y)
-{
-    int offsetX = x - dragPrevX;
-    int offsetY = y - dragPrevY;
+void mouseDrag(int x, int y) {
+  int offsetX = x - dragPrevX;
+  int offsetY = y - dragPrevY;
+  dragPrevX = x;
+  dragPrevY = y;
+  phaseRender->mouseDrag(offsetX, offsetY);
+}
+
+void mouseClick(int button, int state, int x, int y) {
+  if (state == GLUT_UP) return;  // Disregard redundant GLUT_UP events
+  if (button == 0) {
+    // Drag started.
     dragPrevX = x;
     dragPrevY = y;
-    phaseRender->mouseDrag(offsetX, offsetY);
+  } else if (button == 3) {
+    // Wheel reports as button 3(scroll up) and button 4(scroll down)
+    phaseRender->moveBackward();
+  } else if (button == 4) {
+    phaseRender->moveForward();
+  }
 }
 
-void mouseClick(int button, int state, int x, int y)
-{
-    if (state == GLUT_UP) return; // Disregard redundant GLUT_UP events
-    if (button == 0) {
-        // Drag started.
-        dragPrevX = x;
-        dragPrevY = y;
-    } else if (button == 3) { 
-        // Wheel reports as button 3(scroll up) and button 4(scroll down)
-        phaseRender->moveBackward();
-    } else if (button == 4) {
-        phaseRender->moveForward();
-    }
+void keyPressed(unsigned char key, int a, int b) {
+  if (key == 'r') generateData();
 }
 
+// main function
+int main(int argc, char** argv) {
+  srand(time(NULL));
+  // initialize glut
+  glutInit(&argc, argv);
 
-void generateData()
-{
-    std::cout << "Generating data..." << std::endl;
-    int numLines = 1;
-    ThreeBodySolver solver;
-    
-    std::vector<std::vector<float>> lines;
-    for (int curLine = 0; curLine < numLines; ++curLine) {
-        auto orbits = solver.randomSolution(40000);
-        for (auto line : orbits) {
-            lines.push_back(line);
-        }
-    }
+  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
 
+  // set window size
+  glutInitWindowSize(700, 500);
+  // set window location
+  glutInitWindowPosition(250, 50);
 
-    //std::vector<float>::size_type numVerts = 2000;
-    //std::vector<std::vector<float>> lines;
+  // create window with window text
+  glutCreateWindow("Phase Space Visualizer");
+  glewInit();
 
-    //for (int curLine = 0; curLine < numLines; ++curLine) {
-    //    std::vector<float> positions(numVerts*3);
-    //    int r = rand() / (RAND_MAX + 1.0) * 2.0;
-    //    for (int i = 0; i < numVerts; ++i) {
-    //        float theta = 6*2.0*M_PI*i/(double)numVerts;
-    //        positions[3 * i + 0] = r*cos(theta*(curLine+1)/20);
-    //        positions[3 * i + 1] = r*sin(theta*(curLine + 1) / r);
-    //        positions[3 * i + 2] = 3.0*i/numVerts + 0.001*curLine;
-    //    }
-    //    lines.push_back(positions);
-    //}
-    std::cout << "Sending data to renderer." << std::endl;
-    phaseRender->updateData(lines);
-}
-
-
-
-// main function    
-int main(int argc, char** argv)
-{
-    srand(time(NULL));
-    // initialize glut    
-    glutInit(&argc, argv);
-
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
-
-    // set window size    
-    glutInitWindowSize(700, 500);
-    // set window location    
-    glutInitWindowPosition(250, 50);
-
-    // create window with window text    
-    glutCreateWindow("Phase Space Visualizer");
-    glewInit();
-
-
-    initGLRendering();
-    generateData();
-    glutDisplayFunc(display);
-    // call glutReshapeFunc() function & pass parameter as Reshape() function    
-    glutReshapeFunc(reshape);
-    glutMotionFunc(mouseDrag);
-    glutMouseFunc(mouseClick);
-    glutMainLoop();
-    return 0;
+  initGLRendering();
+  generateData();
+  glutDisplayFunc(display);
+//  glutIdleFunc(updateRender);
+  glutReshapeFunc(reshape);
+  glutMotionFunc(mouseDrag);
+  glutMouseFunc(mouseClick);
+  glutKeyboardFunc(keyPressed);
+  glutMainLoop();
+  return 0;
 }

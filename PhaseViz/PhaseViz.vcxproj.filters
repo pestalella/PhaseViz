@@ -40,5 +40,11 @@
     <None Include="phase.frag">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="plain.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="plain.frag">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

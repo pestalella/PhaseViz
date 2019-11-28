@@ -149,6 +149,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="phase.frag" />
+    <None Include="plain.frag" />
+    <None Include="plain.vert" />
     <None Include="rotate.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
