@@ -76,7 +76,7 @@ glm::dvec3 randomVector(double scale = 1.0)
 
 Body randomBody()
 {
-    return {randomVector(0.1), randomVector(0)};
+    return {randomVector(0.05), randomVector(0)};
 }
 
 SystemAccels computeAccelerations(Body const &b1, Body const &b2,
@@ -105,7 +105,7 @@ ThreeBodySolver::ThreeBodySolver()
     bodies[2] = randomBody();
 }
 
-std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints)
+std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints, glm::dvec3 &orbitCenter)
 {
     std::vector<float> orbitVertices;
     std::vector<float> orbitColor;
@@ -114,9 +114,9 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints)
     bodies[1] = randomBody();
     bodies[2] = randomBody();
 
-    const glm::vec3 bias1(10, -10, 0);
+    const glm::vec3 bias1(20, 10, 0);
     const glm::vec3 bias2(-10, 0, 0);
-    const glm::vec3 bias3(10, 10, 0);
+    const glm::vec3 bias3(0, -10, 0);
     bodies[0].position += bias1;
     bodies[1].position += bias2;
     bodies[2].position += bias3;
@@ -124,9 +124,9 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints)
     glm::dvec3 center = 1/3.0*(bodies[0].position + bodies[1].position + bodies[2].position);
     //  glm::dvec3 center(0);
     glm::vec3 velocity = 1/3.0*(bodies[0].velocity + bodies[1].velocity + bodies[2].velocity);
-//    glm::dvec3 velocity(0);
+    //    glm::dvec3 velocity(0);
 
-      // Center the system around the origin of coords
+          // Center the system around the origin of coords
     bodies[0].position -= center;
     bodies[1].position -= center;
     bodies[2].position -= center;
@@ -141,12 +141,37 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints)
     glm::vec3 color = randomVector(0.5) + glm::dvec3(0.5);
 
     // for (int i = 0; i < numSteps; ++i) {
-    while (numVerts < numPoints) {
-        advanceStep(0.01);
+    glm::dvec3 accum(0);
 
-        numSteps++;
-//        if (numSteps % 10 == 1) {
-            auto projected = p.phaseSpaceToVizSpace(bodies[0], bodies[1], bodies[2]);
+    orbitCenter = glm::dvec3(0);
+    glm::vec3 lastVert(0);
+    glm::vec3 lastOrbitPoint(0);
+
+    double tStep = 0.0005;
+
+    while (numVerts < numPoints) {
+        advanceStep(tStep);
+        auto projected = p.phaseSpaceToVizSpace(bodies[0], bodies[1], bodies[2]);
+        double distToLastPoint = glm::length(projected-lastOrbitPoint);
+
+        if (distToLastPoint > 1E-3 && numSteps != 0) {
+            // Undo last step
+            advanceStep(-tStep);
+            tStep *= 0.5;
+            std::cout << "need shorter steps: " << tStep << std::endl;
+            continue;
+        } else if (distToLastPoint < 1E-5) {
+            // We are doing tiny steps. Make them longer in next iter.
+            tStep *= 2;
+            std::cout << "need longer steps: " << tStep << std::endl;
+        }
+        double distToLastVert = glm::length(projected-lastVert);
+        lastOrbitPoint = projected;
+
+        if ((distToLastVert > 1E-3) || ((distToLastVert > 5E-5) && (numSteps % 100 == 1))) {
+//            std::cout << "(" << numVerts << ", " << numSteps << ", " << distToLastVert <<") ";
+            lastVert = projected;
+            orbitCenter += projected;
             orbitVertices.push_back(projected[0]);
             orbitVertices.push_back(projected[1]);
             orbitVertices.push_back(projected[2]);
@@ -156,9 +181,10 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints)
             orbitColor.push_back(color.b);
 
             numVerts++;
-//        }
+        }
+        numSteps++;
     }
-
+    orbitCenter *= (1.0/numVerts);
     return std::vector<std::vector<float>>({orbitVertices, orbitColor});
 }
 

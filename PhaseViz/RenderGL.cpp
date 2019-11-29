@@ -116,7 +116,7 @@ RenderGL::RenderGL() :
     viewMat(glm::mat4(1.0f))
 {
     shaderId = loadShaders("rotate.vert", "phase.frag");
-//   shaderId = loadShaders("plain.vert", "plain.frag");
+    //   shaderId = loadShaders("plain.vert", "plain.frag");
 }
 
 RenderGL::~RenderGL()
@@ -166,7 +166,7 @@ void RenderGL::update()
 //}
 //
 
- void RenderGL::display()
+void RenderGL::display()
 {
     // clearing the window or remove all drawn objects
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -189,8 +189,8 @@ void RenderGL::update()
 
     // specify vertex arrays with their offsets
     glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, (void*)cOffset);
-    glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, (void*)nOffset);
+    glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, (void *)cOffset);
+    glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, (void *)nOffset);
 
     // finally draw a cube with glDrawElements()
     for (int i = 0; i < numLines; ++i) {
@@ -218,7 +218,7 @@ void RenderGL::reshape(int width, int height)
     // adjusts the pixel rectangle for drawing to be the entire new window
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 
-    projMat = glm::perspective((float)(15.0 * M_PI / 180),
+    projMat = glm::perspective((float)(5.0 * M_PI / 180),
         (GLfloat)width / (GLfloat)height, 0.1f, 2000.0f);
     viewMat = glm::lookAt(eye, glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
     modelViewProjMat = projMat * viewMat * modelMat;
@@ -233,24 +233,29 @@ void RenderGL::mouseDrag(int dx, int dy)
     modelMat = glm::rotate(
         modelMat, rotY, glm::vec3(modelMatInv * glm::vec4(1.0, 0.0, 0.0, 0.0)));
     modelMatInv = glm::inverse(modelMat);
+    modelViewMatInv = glm::inverse(viewMat * modelMat);
     modelViewProjMat = projMat * viewMat * modelMat;
     display();
 }
 
 void RenderGL::moveForward()
 {
-    float step = eye.z * 0.1f;
+    float step = 0.1f;
     eye += glm::vec3(0, 0, step);
+//    eye = eye + glm::vec3(modelViewMatInv * glm::vec4(0, 0, step, 1.0));
     viewMat = glm::lookAt(eye, glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+    modelViewMatInv = glm::inverse(viewMat * modelMat);
     modelViewProjMat = projMat * viewMat * modelMat;
     display();
 }
 
 void RenderGL::moveBackward()
 {
-    float step = eye.z * 0.1f;
+    float step = 0.1f;
     eye += glm::vec3(0, 0, -step);
+//    eye = eye - glm::vec3(modelViewMatInv * glm::vec4(0, 0, step, 1.0));
     viewMat = glm::lookAt(eye, glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+    modelViewMatInv = glm::inverse(viewMat * modelMat);
     modelViewProjMat = projMat * viewMat * modelMat;
     display();
 }
@@ -329,17 +334,6 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
         }
     }
 
-    // for (int i = 0; i < numPoints-1; ++i) {
-    //    glm::vec3 t1(tangents[3 * i + 0], tangents[3 * i + 1], tangents[3 * i +
-    //    2]); glm::vec3 t2(tangents[3 * (i+1) + 0], tangents[3 * (i+1) + 1],
-    //    tangents[3 * (i+1) + 2]); glm::vec3 up = glm::normalize(glm::cross(t1,
-    //    t2)); glm::vec3 normal = glm::normalize(glm::cross(t1, up)); normals[3 *
-    //    i + 0] = normal[0]; normals[3 * i + 1] = normal[1]; normals[3 * i + 2] =
-    //    normal[2];
-    //}
-    // normals[3*(numPoints - 1) + 0] = normals[3*(numPoints - 2) + 0];
-    // normals[3*(numPoints - 1) + 1] = normals[3*(numPoints - 2) + 1];
-    // normals[3*(numPoints - 1) + 2] = normals[3*(numPoints - 2) + 2];
 
     std::cout << "== Normals computed. Sending data to the GPU." << std::endl;
 
@@ -355,11 +349,11 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
         &vertices[0]);
     // copy colors
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(),
-        sizeof(float) * colors.size(), &colors[0]);
+        sizeof(float) * vertColors.size(), &vertColors[0]);
     // copy normals
     glBufferSubData(
         GL_ARRAY_BUFFER,
-        sizeof(float) * vertices.size() + sizeof(float) * colors.size(),
+        sizeof(float) * vertices.size() + sizeof(float) * vertColors.size(),
         sizeof(float) * normals.size(), &tangents[0]);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 

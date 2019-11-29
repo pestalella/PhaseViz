@@ -30,6 +30,7 @@ private:
     glm::vec3 eye;
     glm::mat4 modelMat;
     glm::mat4 modelMatInv;
+    glm::mat4 modelViewMatInv;
     glm::mat4 modelViewProjMat;
     glm::mat4 projMat;
     glm::mat4 viewMat;

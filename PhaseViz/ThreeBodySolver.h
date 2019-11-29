@@ -30,7 +30,7 @@ class Projection {
 class ThreeBodySolver {
  public:
     ThreeBodySolver();
-    std::vector<std::vector<float>> randomSolution(int numSteps);
+    std::vector<std::vector<float>> randomSolution(int numSteps, glm::dvec3 &orbitCenter);
     void advanceStep(double tStep);
     Body bodies[3];
 

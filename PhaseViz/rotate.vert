@@ -12,13 +12,13 @@ out vec3 vertNormal;
 
 void main()
 {
-    vertColor = inColor;
+	vertColor = inColor;
 
 	mat3 modelViewMatrix = mat3(modelViewProjMatrix);
 	mat3 normalMatrix = inverse(modelViewMatrix);
 	normalMatrix = transpose(normalMatrix);
-    vertNormal = inNormal*normalMatrix;
-    gl_Position = modelViewProjMatrix * position;
+	vertNormal = inNormal*normalMatrix;
 	vertPos = modelViewMatrix * vec3(position);
+	gl_Position = modelViewProjMatrix * position;
 }
 
