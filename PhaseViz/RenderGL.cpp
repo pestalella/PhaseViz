@@ -1,15 +1,15 @@
 #include "RenderGL.h"
 
 #include <GL/glew.h>
-#include <gl/glut.h>
+#include <GL/glut.h>
 #include <fstream>
 #include <glm/ext.hpp>
 #include <iostream>
 #include <sstream>
 
-//#pragma warning(disable:C26451)
-
+#if defined(_WIN32) || defined(WIN32)
 const double M_PI = 3.141592653589793238462643;
+#endif
 
 GLuint loadShaders(std::string const &vertexFilePath,
     std::string const &fragmentFilePath)
@@ -342,7 +342,7 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
     // reserve space
     glBufferData(
         GL_ARRAY_BUFFER,
-        sizeof(float) * (vertices.size() + colors.size() + normals.size()), 0,
+        sizeof(float) * (vertices.size() + vertColors.size() + normals.size()), 0,
         GL_STATIC_DRAW);
     // copy positions
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * vertices.size(),

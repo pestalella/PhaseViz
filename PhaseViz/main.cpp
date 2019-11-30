@@ -1,25 +1,32 @@
+#if defined(_WIN32) || defined(WIN32)
+
 #include <Windows.h>
-// first include Windows.h header file which is required
+const double M_PI = 3.141592653589793238462643;
+
+#elif defined __unix__                    /* __unix__ is usually defined by compilers targeting Unix systems */
+
+#include <unistd.h>
+#define Sleep(a) usleep((a)*1000)
+
+#endif
 
 #include "RenderGL.h"
 #include "ThreeBodySolver.h"
 
 #include <GL/glew.h>
-#include <gl/glut.h>
+#include <GL/glut.h>
 #include <cmath>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
 #include <memory>
 
-const double M_PI = 3.141592653589793238462643;
-
 std::shared_ptr<RenderGL> phaseRender;
 
 void generateData()
 {
     std::cout << "Generating data..." << std::endl;
-    int numLines = 100;
+    int numLines = 1;
     ThreeBodySolver solver;
 
     std::vector<std::vector<float>> lines;

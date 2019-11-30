@@ -140,7 +140,6 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints, g
 
     glm::vec3 color = randomVector(0.5) + glm::dvec3(0.5);
 
-    // for (int i = 0; i < numSteps; ++i) {
     glm::dvec3 accum(0);
 
     orbitCenter = glm::dvec3(0);
@@ -158,18 +157,15 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints, g
             // Undo last step
             advanceStep(-tStep);
             tStep *= 0.5;
-            std::cout << "need shorter steps: " << tStep << std::endl;
             continue;
         } else if (distToLastPoint < 1E-5) {
             // We are doing tiny steps. Make them longer in next iter.
             tStep *= 2;
-            std::cout << "need longer steps: " << tStep << std::endl;
         }
         double distToLastVert = glm::length(projected-lastVert);
         lastOrbitPoint = projected;
 
         if ((distToLastVert > 1E-3) || ((distToLastVert > 5E-5) && (numSteps % 100 == 1))) {
-//            std::cout << "(" << numVerts << ", " << numSteps << ", " << distToLastVert <<") ";
             lastVert = projected;
             orbitCenter += projected;
             orbitVertices.push_back(projected[0]);
