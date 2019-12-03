@@ -4,69 +4,81 @@
 #include <iostream>
 #include <numeric>
 
-Projection::Projection() : rowX(18), rowY(18), rowZ(18) { createMatrix(); }
+Projection::Projection()
+{
+    createMatrix();
+}
 
 void Projection::createMatrix()
 {
+    std::vector<double> rowX(18);
+    std::vector<double> rowY(18);
+    std::vector<double> rowZ(18);
+
     for (int i = 0; i < 18; ++i) {
-        rowX[i] = rand() / (RAND_MAX + 1.0);
-        rowY[i] = rand() / (RAND_MAX + 1.0);
-        rowZ[i] = rand() / (RAND_MAX + 1.0);
+        rowX[i] = (rand() / (RAND_MAX + 1.0));
+        rowY[i] = (rand() / (RAND_MAX + 1.0));
+        rowZ[i] = (rand() / (RAND_MAX + 1.0));
+        //rowX[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;
+        //rowY[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;
+        //rowZ[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;
     }
-    double sX = 1.0 / std::accumulate(rowX.begin(), rowX.end(), 0.0);
-    double sY = 1.0 / std::accumulate(rowY.begin(), rowY.end(), 0.0);
-    double sZ = 1.0 / std::accumulate(rowZ.begin(), rowZ.end(), 0.0);
+
+    double sumSquaredX = std::inner_product(rowX.begin(), rowX.end(), rowX.begin(), 0.0);
+    double sumSquaredY = std::inner_product(rowY.begin(), rowY.end(), rowY.begin(), 0.0);
+    double sumSquaredZ = std::inner_product(rowZ.begin(), rowZ.end(), rowZ.begin(), 0.0);
+
+    double sX = 1.0 / sqrt(sumSquaredX);
+    double sY = 1.0 / sqrt(sumSquaredY);
+    double sZ = 1.0 / sqrt(sumSquaredZ);
 
     for (int i = 0; i < 18; ++i) {
         rowX[i] *= sX;
         rowY[i] *= sY;
         rowZ[i] *= sZ;
     }
-    std::cout << std::setprecision(3) << "rowX rowY rowZ" << std::endl;
-    for (int i = 0; i < 18; ++i) {
-        std::cout << std::setprecision(3) << rowX[i] << " " << rowY[i] << " "
-            << rowZ[i] << std::endl;
+
+    for (int body = 0; body < 3; body++) {
+        for (int column = 0; column < 3; column++) {
+            positions[body][column][0] = rowX[3*body + column];
+            positions[body][column][1] = rowY[3*body + column];
+            positions[body][column][2] = rowZ[3*body + column];
+        }
+    }
+    for (int body = 0; body < 3; body++) {
+        for (int column = 0; column < 3; column++) {
+            velocities[body][column][0] = rowX[9 + 3*body + column];
+            velocities[body][column][1] = rowY[9 + 3*body + column];
+            velocities[body][column][2] = rowZ[9 + 3*body + column];
+        }
+    }
+
+    //std::cout << std::setprecision(3) << "rowX rowY rowZ" << std::endl;
+    //for (int i = 0; i < 18; ++i) {
+    //    std::cout << std::setprecision(3) << rowX[i] << " " << rowY[i] << " "
+    //        << rowZ[i] << std::endl;
+    //}
+}
+
+glm::dvec3 Projection::phaseSpaceToVizSpace(Body const &b0, Body const &b1, Body const &b2)
+{
+    glm::dvec3 r = positions[0]*b0.position + positions[1]*b1.position + positions[2]*b2.position +
+        velocities[0]*b0.velocity + velocities[1]*b1.velocity + velocities[2]*b2.velocity;
+    return r;
+}
+
+glm::mat3x3 Projection::projMatrix(Axis selectedAxis)
+{
+    switch (selectedAxis) {
+    case POS0: return positions[0];
+    case POS1: return positions[1];
+    case POS2: return positions[2];
+    case VEL0: return velocities[0];
+    case VEL1: return velocities[1];
+    case VEL2: return velocities[2];
     }
 }
 
-glm::vec3 Projection::phaseSpaceToVizSpace(Body const &b1, Body const &b2,
-    Body const &b3)
-{
-    std::vector<float> phaseSpacePoint(18);  // 18 dims
-
-    phaseSpacePoint[0] = b1.position[0];
-    phaseSpacePoint[1] = b1.position[1];
-    phaseSpacePoint[2] = b1.position[2];
-    phaseSpacePoint[3] = b1.velocity[0];
-    phaseSpacePoint[4] = b1.velocity[1];
-    phaseSpacePoint[5] = b1.velocity[2];
-
-    phaseSpacePoint[6] = b2.position[0];
-    phaseSpacePoint[7] = b2.position[1];
-    phaseSpacePoint[8] = b2.position[2];
-    phaseSpacePoint[9] = b2.velocity[0];
-    phaseSpacePoint[10] = b2.velocity[1];
-    phaseSpacePoint[11] = b2.velocity[2];
-
-    phaseSpacePoint[12] = b3.position[0];
-    phaseSpacePoint[13] = b3.position[1];
-    phaseSpacePoint[14] = b3.position[2];
-    phaseSpacePoint[15] = b3.velocity[0];
-    phaseSpacePoint[16] = b3.velocity[1];
-    phaseSpacePoint[17] = b3.velocity[2];
-
-    float x = std::inner_product(std::begin(phaseSpacePoint),
-        std::end(phaseSpacePoint),
-        std::begin(rowX), 0.0);
-    float y = std::inner_product(std::begin(phaseSpacePoint),
-        std::end(phaseSpacePoint),
-        std::begin(rowY), 0.0);
-    float z = std::inner_product(std::begin(phaseSpacePoint),
-        std::end(phaseSpacePoint),
-        std::begin(rowZ), 0.0);
-
-    return glm::vec3(x, y, z);
-}
 glm::dvec3 randomVector(double scale = 1.0)
 {
     return glm::dvec3((rand() / (RAND_MAX + 1.0) - 0.5) * scale,
@@ -76,7 +88,7 @@ glm::dvec3 randomVector(double scale = 1.0)
 
 Body randomBody()
 {
-    return {randomVector(0.05), randomVector(0)};
+    return { randomVector(0.05), randomVector(0) };
 }
 
 SystemAccels computeAccelerations(Body const &b1, Body const &b2,
@@ -105,7 +117,8 @@ ThreeBodySolver::ThreeBodySolver()
     bodies[2] = randomBody();
 }
 
-std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints, glm::dvec3 &orbitCenter)
+std::vector<std::vector<float>> ThreeBodySolver::randomSolution(
+    int numPoints, glm::dvec3 &orbitCenter)
 {
     std::vector<float> orbitVertices;
     std::vector<float> orbitColor;
@@ -121,12 +134,14 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints, g
     bodies[1].position += bias2;
     bodies[2].position += bias3;
 
-    glm::dvec3 center = 1/3.0*(bodies[0].position + bodies[1].position + bodies[2].position);
+    glm::dvec3 center =
+        1/3.0*(bodies[0].position + bodies[1].position + bodies[2].position);
     //  glm::dvec3 center(0);
-    glm::vec3 velocity = 1/3.0*(bodies[0].velocity + bodies[1].velocity + bodies[2].velocity);
+    glm::vec3 velocity =
+        1/3.0*(bodies[0].velocity + bodies[1].velocity + bodies[2].velocity);
     //    glm::dvec3 velocity(0);
 
-          // Center the system around the origin of coords
+    // Center the system around the origin of coords
     bodies[0].position -= center;
     bodies[1].position -= center;
     bodies[2].position -= center;
@@ -143,15 +158,15 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints, g
     glm::dvec3 accum(0);
 
     orbitCenter = glm::dvec3(0);
-    glm::vec3 lastVert(0);
-    glm::vec3 lastOrbitPoint(0);
+    glm::dvec3 lastVert(0);
+    glm::dvec3 lastOrbitPoint(0);
 
-    double tStep = 0.0005;
+    double tStep = 0.005;
 
     while (numVerts < numPoints) {
         advanceStep(tStep);
         auto projected = p.phaseSpaceToVizSpace(bodies[0], bodies[1], bodies[2]);
-        double distToLastPoint = glm::length(projected-lastOrbitPoint);
+        double distToLastPoint = glm::length(projected - lastOrbitPoint);
 
         if (distToLastPoint > 1E-3 && numSteps != 0) {
             // Undo last step
@@ -162,10 +177,11 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints, g
             // We are doing tiny steps. Make them longer in next iter.
             tStep *= 2;
         }
-        double distToLastVert = glm::length(projected-lastVert);
+        double distToLastVert = glm::length(projected - lastVert);
         lastOrbitPoint = projected;
 
-        if ((distToLastVert > 1E-3) || ((distToLastVert > 5E-5) && (numSteps % 100 == 1))) {
+        if ((distToLastVert > 2E-2) ||
+            ((distToLastVert > 1E-3) && (numSteps % 100 == 1))) {
             lastVert = projected;
             orbitCenter += projected;
             orbitVertices.push_back(projected[0]);
@@ -180,8 +196,8 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(int numPoints, g
         }
         numSteps++;
     }
-    orbitCenter *= (1.0/numVerts);
-    return std::vector<std::vector<float>>({orbitVertices, orbitColor});
+    orbitCenter *= 1.0/numVerts;
+    return std::vector<std::vector<float>>({ orbitVertices, orbitColor });
 }
 
 void ThreeBodySolver::advanceStep(double tStep)
@@ -194,4 +210,13 @@ void ThreeBodySolver::advanceStep(double tStep)
     bodies[0].velocity += tStep / 2.0 * (accels.a1 + newAccels.a1);
     bodies[1].velocity += tStep / 2.0 * (accels.a2 + newAccels.a2);
     bodies[2].velocity += tStep / 2.0 * (accels.a3 + newAccels.a3);
+}
+
+glm::mat3 ThreeBodySolver::projectionAxes(Axis selectedAxis)
+{
+    auto pmat = p.projMatrix(selectedAxis);
+    auto x = glm::normalize(pmat[0]);
+    auto y = glm::normalize(pmat[1]);
+    auto z = glm::normalize(pmat[2]);
+    return glm::mat3(x, y, z);
 }

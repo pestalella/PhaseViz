@@ -18,6 +18,7 @@ public:
     void moveBackward();
     void updateData(std::vector<std::vector<float>> const& lines,
                     std::vector<std::vector<float>> const& colors);
+    void setProjAxes(glm::mat3 const &axes);
 
 private:
     int numPoints;
@@ -34,7 +35,8 @@ private:
     glm::mat4 modelViewProjMat;
     glm::mat4 projMat;
     glm::mat4 viewMat;
-
-    ThreeBodySolver solv3;
+    
+    glm::mat3 projAxes;
+//    ThreeBodySolver solv3;
 };
 

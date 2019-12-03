@@ -1,13 +1,9 @@
 #if defined(_WIN32) || defined(WIN32)
-
 #include <Windows.h>
 const double M_PI = 3.141592653589793238462643;
-
-#elif defined __unix__                    /* __unix__ is usually defined by compilers targeting Unix systems */
-
+#elif defined __unix__ 
 #include <unistd.h>
 #define Sleep(a) usleep((a)*1000)
-
 #endif
 
 #include "RenderGL.h"
@@ -22,28 +18,30 @@ const double M_PI = 3.141592653589793238462643;
 #include <memory>
 
 std::shared_ptr<RenderGL> phaseRender;
+ThreeBodySolver solver;
+Axis drawnAxis = Axis::POS0;
 
 void generateData()
 {
     std::cout << "Generating data..." << std::endl;
     int numLines = 1;
-    ThreeBodySolver solver;
 
     std::vector<std::vector<float>> lines;
     std::vector<std::vector<float>> colors;
     glm::dvec3 center(0);
     for (int curLine = 0; curLine < numLines; ++curLine) {
         glm::dvec3 orbitCenter;
-        auto orbits = solver.randomSolution(8000, orbitCenter);
-        std::cout << "line " << curLine << std::setprecision(3) <<
-            " center: ["  << orbitCenter.x << ", " << orbitCenter.y << ", " << orbitCenter.z << "]" << std::endl;
+        auto orbits = solver.randomSolution(4000, orbitCenter);
+        std::cout << "line " << curLine << std::setprecision(3) << " center: ["
+            << orbitCenter.x << ", " << orbitCenter.y << ", " << orbitCenter.z
+            << "]" << std::endl;
         center += orbitCenter;
         lines.push_back(orbits[0]);
         colors.push_back(orbits[1]);
     }
 
     center *= 1.0/numLines;
-       
+
     for (int curLine = 0; curLine < numLines; ++curLine) {
         int numVerts = lines[curLine].size()/3;
         for (int i = 0; i < numVerts; ++i) {
@@ -55,6 +53,7 @@ void generateData()
 
     std::cout << "Sending data to renderer." << std::endl;
     phaseRender->updateData(lines, colors);
+    phaseRender->setProjAxes(solver.projectionAxes(drawnAxis));
 }
 
 void updateRender(void)
@@ -68,7 +67,10 @@ void display(void)
     phaseRender->display();
 }
 
-void reshape(int w, int h) { phaseRender->reshape(w, h); }
+void reshape(int w, int h)
+{
+    phaseRender->reshape(w, h);
+}
 
 void initGLRendering()
 {
@@ -103,22 +105,32 @@ void mouseClick(int button, int state, int x, int y)
         dragPrevY = y;
     } else if (button == 3) {
         // Wheel reports as button 3(scroll up) and button 4(scroll down)
-        phaseRender->moveBackward();
-    } else if (button == 4) {
         phaseRender->moveForward();
+    } else if (button == 4) {
+        phaseRender->moveBackward();
     }
 }
 
 void keyPressed(unsigned char key, int a, int b)
 {
-    if (key == 'r') generateData();
+    if (key == 'r')
+        generateData();
+    else if (key == 'w') {
+        phaseRender->moveForward();
+    } else if (key == 's') {
+        phaseRender->moveBackward();
+    } else if (key == 'a') {
+        drawnAxis = (Axis)((drawnAxis+1)%AXIS_NELEMS);
+        phaseRender->setProjAxes(solver.projectionAxes(drawnAxis));
+        glutPostRedisplay();
+    }
 }
 
 // main function
 int main(int argc, char **argv)
 {
     srand(42);
-//    srand(time(NULL));
+    //    srand(time(NULL));
     // initialize glut
     glutInit(&argc, argv);
 

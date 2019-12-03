@@ -1,9 +1,11 @@
 #include "RenderGL.h"
 
+#include <chrono>
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <fstream>
 #include <glm/ext.hpp>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 
@@ -111,9 +113,11 @@ RenderGL::RenderGL() :
     eye(-0.3, 0.5, 5.0),
     modelMat(glm::mat4(1.0f)),
     modelMatInv(glm::mat4(1.0f)),
+    modelViewMatInv(glm::mat4(1.0f)),
     modelViewProjMat(glm::mat4(1.0f)),
     projMat(glm::mat4(1.0f)),
-    viewMat(glm::mat4(1.0f))
+    viewMat(glm::mat4(1.0f)),
+    projAxes(0)
 {
     shaderId = loadShaders("rotate.vert", "phase.frag");
     //   shaderId = loadShaders("plain.vert", "plain.frag");
@@ -129,7 +133,7 @@ RenderGL::~RenderGL()
 void RenderGL::update()
 {
     // Update vertex positions
-    solv3.advanceStep(0.1);
+    //solv3.advanceStep(0.1);
 
     glutPostRedisplay();
 }
@@ -171,6 +175,27 @@ void RenderGL::display()
     // clearing the window or remove all drawn objects
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(&projMat[0][0]);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(&modelMat[0][0]);
+    glMultMatrixf(&viewMat[0][0]);
+
+    glLineWidth(3.0f);
+    glBegin(GL_LINES);
+        glColor3f(1, 0, 0);
+        glVertex3f(0, 0, 0);
+        glVertex3f(projAxes[0][0], projAxes[0][1], projAxes[0][2]);
+    
+        glColor3f(0, 1, 0);
+        glVertex3f(0, 0, 0);
+        glVertex3f(projAxes[1][0], projAxes[1][1], projAxes[1][2]);
+
+        glColor3f(0, 0, 1);
+        glVertex3f(0, 0, 0);
+        glVertex3f(projAxes[2][0], projAxes[2][1], projAxes[2][2]);
+    glEnd();
+
     glUseProgram(shaderId);
     GLuint mvpId = glGetUniformLocation(shaderId, "modelViewProjMatrix");
     glUniformMatrix4fv(mvpId, 1, GL_FALSE, &modelViewProjMat[0][0]);
@@ -182,17 +207,15 @@ void RenderGL::display()
     // enable vertex arrays
     glEnableVertexAttribArray(0);          // activate vertex position array
     glEnableVertexAttribArray(1);          // activate vertex color array
-    glEnableVertexAttribArray(2);          // activate vertex normal array
 
     size_t cOffset = sizeof(float) * numPoints * 3;
-    size_t nOffset = sizeof(float) * numPoints * 3 + cOffset;
 
     // specify vertex arrays with their offsets
     glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
     glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, (void *)cOffset);
-    glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, (void *)nOffset);
 
     // finally draw a cube with glDrawElements()
+    glLineWidth(3.0);
     for (int i = 0; i < numLines; ++i) {
         int indexOffset = 4 * i * numPoints / numLines;
         glDrawElements(GL_LINE_STRIP,
@@ -203,11 +226,11 @@ void RenderGL::display()
     // disable vertex arrays
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(2);
 
     // unbind VBOs
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    
     glutSwapBuffers();
 }
 
@@ -235,29 +258,48 @@ void RenderGL::mouseDrag(int dx, int dy)
     modelMatInv = glm::inverse(modelMat);
     modelViewMatInv = glm::inverse(viewMat * modelMat);
     modelViewProjMat = projMat * viewMat * modelMat;
-    display();
+//    display();
+    glutPostRedisplay();
+}
+
+float timeMultiplier()
+{
+    static auto prevTime = std::chrono::high_resolution_clock::now();
+    static float multiplier = 0.1f;
+    auto curTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - prevTime).count();
+    prevTime = curTime;
+    if (duration < 100) {
+        multiplier *= 1.05;
+        multiplier = multiplier > 10.0f ? 10.0f : multiplier;
+    } else
+        multiplier = 1.0f;
+    std::cout << multiplier << std::endl;
+    return multiplier;
 }
 
 void RenderGL::moveForward()
 {
-    float step = 0.1f;
-    eye += glm::vec3(0, 0, step);
-//    eye = eye + glm::vec3(modelViewMatInv * glm::vec4(0, 0, step, 1.0));
+    float step = timeMultiplier();
+    eye += glm::vec3(0, 0, -step);
+    //    eye = eye + glm::vec3(modelViewMatInv * glm::vec4(0, 0, step, 1.0));
     viewMat = glm::lookAt(eye, glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
     modelViewMatInv = glm::inverse(viewMat * modelMat);
     modelViewProjMat = projMat * viewMat * modelMat;
-    display();
+//    display();
+    glutPostRedisplay();
 }
 
 void RenderGL::moveBackward()
 {
-    float step = 0.1f;
-    eye += glm::vec3(0, 0, -step);
-//    eye = eye - glm::vec3(modelViewMatInv * glm::vec4(0, 0, step, 1.0));
+    float step = timeMultiplier();
+    eye += glm::vec3(0, 0, step);
+    //    eye = eye - glm::vec3(modelViewMatInv * glm::vec4(0, 0, step, 1.0));
     viewMat = glm::lookAt(eye, glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
     modelViewMatInv = glm::inverse(viewMat * modelMat);
     modelViewProjMat = projMat * viewMat * modelMat;
-    display();
+//    display();
+    glutPostRedisplay();
 }
 
 void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
@@ -275,13 +317,8 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
 
     std::vector<float> vertices;
     std::vector<float> vertColors;
-    std::vector<float> normals;
-    std::vector<float> tangents;
     std::vector<unsigned int> indices;
 
-    //    colors.resize(numPoints * 3);
-    normals.resize(numPoints * 3);
-    tangents.resize(numPoints * 3);
     indices.resize(numPoints);
 
     for (auto line : lines) {
@@ -299,41 +336,16 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
     std::cout << "==          Total vertices:" << numPoints << std::endl;
     std::cout << "==              Total size:"
         << numPoints * 3 * sizeof(float) / 1024 << " kB" << std::endl;
-    std::cout << "== Computing normals..." << std::endl;
+
     int curVertexIndex = 0;
     for (int curLine = 0; curLine < numLines; ++curLine) {
-        // float color[3] = { rand() / (RAND_MAX + 1.0), rand() / (RAND_MAX
-        // + 1.0), rand() / (RAND_MAX + 1.0) };
 
         int curLineVerts = lines[curLine].size() / 3;
         for (int i = 0; i < curLineVerts; ++i) {
             indices[curVertexIndex] = curVertexIndex;
-            int attribIndex = 3 * curVertexIndex + 0;
-            // colors[attribIndex + 0] = color[0];
-            // colors[attribIndex + 1] = color[1];
-            // colors[attribIndex + 2] = color[2];
-
-            if (i != curLineVerts - 1) {
-                // Well, those are tangents
-                tangents[attribIndex + 0] =
-                    vertices[attribIndex + 3 + 0] - vertices[attribIndex + 0];
-                tangents[attribIndex + 1] =
-                    vertices[attribIndex + 3 + 1] - vertices[attribIndex + 1];
-                tangents[attribIndex + 2] =
-                    vertices[attribIndex + 3 + 2] - vertices[attribIndex + 2];
-            } else {
-                // The last tangent
-                tangents[attribIndex + 0] =
-                    2 * tangents[attribIndex - 3 + 0] - tangents[attribIndex - 6 + 0];
-                tangents[attribIndex + 1] =
-                    2 * tangents[attribIndex - 3 + 1] - tangents[attribIndex - 6 + 1];
-                tangents[attribIndex + 2] =
-                    2 * tangents[attribIndex - 3 + 2] - tangents[attribIndex - 6 + 2];
-            }
             curVertexIndex++;
         }
     }
-
 
     std::cout << "== Normals computed. Sending data to the GPU." << std::endl;
 
@@ -342,7 +354,7 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
     // reserve space
     glBufferData(
         GL_ARRAY_BUFFER,
-        sizeof(float) * (vertices.size() + vertColors.size() + normals.size()), 0,
+        sizeof(float) * (vertices.size() + vertColors.size()), 0,
         GL_STATIC_DRAW);
     // copy positions
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * vertices.size(),
@@ -350,15 +362,19 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
     // copy colors
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(),
         sizeof(float) * vertColors.size(), &vertColors[0]);
-    // copy normals
-    glBufferSubData(
-        GL_ARRAY_BUFFER,
-        sizeof(float) * vertices.size() + sizeof(float) * vertColors.size(),
-        sizeof(float) * normals.size(), &tangents[0]);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboId);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(),
         &indices[0], GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void RenderGL::setProjAxes(glm::mat3 const &axes)
+{
+    //std::cout << "Axes:" << std::endl <<
+    //    "[" << std::setprecision(3) << axes[0][0] << ", " << axes[0][1] << ", " << axes[0][2] << "]" << std::endl <<
+    //    "[" << std::setprecision(3) << axes[1][0] << ", " << axes[1][1] << ", " << axes[1][2] << "]" << std::endl <<
+    //    "[" << std::setprecision(3) << axes[2][0] << ", " << axes[2][1] << ", " << axes[2][2] << "]" << std::endl;
+    projAxes = glm::scale(glm::mat4(axes), glm::vec3(0.1));
 }
