@@ -1,5 +1,6 @@
 #include "ThreeBodySolver.h"
 
+#include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
@@ -16,26 +17,25 @@ void Projection::createMatrix()
     std::vector<double> rowZ(18);
 
     for (int i = 0; i < 18; ++i) {
-        rowX[i] = (rand() / (RAND_MAX + 1.0));
-        rowY[i] = (rand() / (RAND_MAX + 1.0));
-        rowZ[i] = (rand() / (RAND_MAX + 1.0));
-        //rowX[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;
-        //rowY[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;
-        //rowZ[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;
+        //rowX[i] = (rand() / (RAND_MAX + 1.0));
+        //rowY[i] = (rand() / (RAND_MAX + 1.0));
+        //rowZ[i] = (rand() / (RAND_MAX + 1.0));
+        rowX[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;
+        rowY[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;
+        rowZ[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;
     }
 
     double sumSquaredX = std::inner_product(rowX.begin(), rowX.end(), rowX.begin(), 0.0);
     double sumSquaredY = std::inner_product(rowY.begin(), rowY.end(), rowY.begin(), 0.0);
     double sumSquaredZ = std::inner_product(rowZ.begin(), rowZ.end(), rowZ.begin(), 0.0);
-
-    double sX = 1.0 / sqrt(sumSquaredX);
-    double sY = 1.0 / sqrt(sumSquaredY);
-    double sZ = 1.0 / sqrt(sumSquaredZ);
+    double sqX = 1.0 / sqrt(sumSquaredX);
+    double sqY = 1.0 / sqrt(sumSquaredY);
+    double sqZ = 1.0 / sqrt(sumSquaredZ);
 
     for (int i = 0; i < 18; ++i) {
-        rowX[i] *= sX;
-        rowY[i] *= sY;
-        rowZ[i] *= sZ;
+        rowX[i] *= sqX;
+        rowY[i] *= sqY;
+        rowZ[i] *= sqZ;
     }
 
     for (int body = 0; body < 3; body++) {
@@ -52,12 +52,6 @@ void Projection::createMatrix()
             velocities[body][column][2] = rowZ[9 + 3*body + column];
         }
     }
-
-    //std::cout << std::setprecision(3) << "rowX rowY rowZ" << std::endl;
-    //for (int i = 0; i < 18; ++i) {
-    //    std::cout << std::setprecision(3) << rowX[i] << " " << rowY[i] << " "
-    //        << rowZ[i] << std::endl;
-    //}
 }
 
 glm::dvec3 Projection::phaseSpaceToVizSpace(Body const &b0, Body const &b1, Body const &b2)
@@ -88,7 +82,7 @@ glm::dvec3 randomVector(double scale = 1.0)
 
 Body randomBody()
 {
-    return { randomVector(0.05), randomVector(0) };
+    return { randomVector(0.1), randomVector(0) };
 }
 
 SystemAccels computeAccelerations(Body const &b1, Body const &b2,
@@ -161,27 +155,29 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(
     glm::dvec3 lastVert(0);
     glm::dvec3 lastOrbitPoint(0);
 
-    double tStep = 0.005;
+    double tStep = 0.01;
 
+
+    auto prevTime = std::chrono::high_resolution_clock::now();
     while (numVerts < numPoints) {
         advanceStep(tStep);
         auto projected = p.phaseSpaceToVizSpace(bodies[0], bodies[1], bodies[2]);
         double distToLastPoint = glm::length(projected - lastOrbitPoint);
 
         if (distToLastPoint > 1E-3 && numSteps != 0) {
-            // Undo last step
+            // Undo last step 
             advanceStep(-tStep);
             tStep *= 0.5;
             continue;
-        } else if (distToLastPoint < 1E-5) {
+        } else if (distToLastPoint < 1E-4) {
             // We are doing tiny steps. Make them longer in next iter.
             tStep *= 2;
         }
         double distToLastVert = glm::length(projected - lastVert);
         lastOrbitPoint = projected;
 
-        if ((distToLastVert > 2E-2) ||
-            ((distToLastVert > 1E-3) && (numSteps % 100 == 1))) {
+        if ((distToLastVert > 5E-2) ||
+            ((distToLastVert > 1E-2) && (numSteps % 100 == 1))) {
             lastVert = projected;
             orbitCenter += projected;
             orbitVertices.push_back(projected[0]);
@@ -196,6 +192,15 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(
         }
         numSteps++;
     }
+    auto curTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - prevTime).count();
+    std::cout << "* Orbit stats" << std::endl <<
+        "---------------" << std::endl <<
+        "    Total steps:" << numSteps << std::endl <<
+        "       Vertices:" << numVerts << std::endl <<
+        "       Time(ms):" << duration << std::endl <<
+        "        Steps/s:" << numSteps*1000.0/duration << std::endl;
+
     orbitCenter *= 1.0/numVerts;
     return std::vector<std::vector<float>>({ orbitVertices, orbitColor });
 }

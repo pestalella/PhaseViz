@@ -24,7 +24,7 @@ Axis drawnAxis = Axis::POS0;
 void generateData()
 {
     std::cout << "Generating data..." << std::endl;
-    int numLines = 1;
+    int numLines = 10;
 
     std::vector<std::vector<float>> lines;
     std::vector<std::vector<float>> colors;

@@ -274,7 +274,6 @@ float timeMultiplier()
         multiplier = multiplier > 10.0f ? 10.0f : multiplier;
     } else
         multiplier = 1.0f;
-    std::cout << multiplier << std::endl;
     return multiplier;
 }
 
