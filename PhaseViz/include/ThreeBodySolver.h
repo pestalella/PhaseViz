@@ -12,7 +12,9 @@ struct SystemAccels {
     glm::dvec3 a1, a2, a3;
 };
 
-enum Axis { POS0, VEL0, POS1, VEL1, POS2, VEL2, AXIS_NELEMS };
+enum Axis {
+    POS0, VEL0, POS1, VEL1, POS2, VEL2, AXIS_NELEMS
+};
 
 class Projection {
 public:
@@ -32,7 +34,7 @@ class ThreeBodySolver {
 public:
     ThreeBodySolver();
     std::vector<std::vector<float>> randomSolution(int numSteps,
-        glm::dvec3 &orbitCenter);
+        glm::dvec3 &minCorner, glm::dvec3 &maxCorner);
     void advanceStep(double tStep);
     glm::mat3 projectionAxes(Axis selectedAxis);
 

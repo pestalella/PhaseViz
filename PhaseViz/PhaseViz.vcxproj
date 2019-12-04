@@ -76,7 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\Pau\source\repos\glm;C:\Users\Pau\source\repos\freeglut-3.2.1\include;C:\Users\Pau\source\repos\glew-2.1.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Pau\source\repos\PhaseViz\PhaseViz\include;C:\Users\Pau\source\repos\freeglut\include;C:\Users\Pau\source\repos\glm;C:\Users\Pau\source\repos\glew-2.1.0\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -91,7 +91,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\Pau\source\repos\freeglut\include;C:\Users\Pau\source\repos\glm;C:\Users\Pau\source\repos\glew-2.1.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Pau\source\repos\PhaseViz\PhaseViz\include;C:\Users\Pau\source\repos\freeglut\include;C:\Users\Pau\source\repos\glm;C:\Users\Pau\source\repos\glew-2.1.0\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,19 +139,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="RenderGL.cpp" />
-    <ClCompile Include="ThreeBodySolver.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="RenderGL.h" />
-    <ClInclude Include="ThreeBodySolver.h" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="phase.frag" />
     <None Include="plain.frag" />
     <None Include="plain.vert" />
     <None Include="rotate.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\RenderGL.cpp" />
+    <ClCompile Include="src\ThreeBodySolver.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\RenderGL.h" />
+    <ClInclude Include="include\ThreeBodySolver.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

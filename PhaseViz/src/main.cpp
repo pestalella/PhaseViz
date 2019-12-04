@@ -30,12 +30,12 @@ void generateData()
     std::vector<std::vector<float>> colors;
     glm::dvec3 center(0);
     for (int curLine = 0; curLine < numLines; ++curLine) {
-        glm::dvec3 orbitCenter;
-        auto orbits = solver.randomSolution(4000, orbitCenter);
-        std::cout << "line " << curLine << std::setprecision(3) << " center: ["
-            << orbitCenter.x << ", " << orbitCenter.y << ", " << orbitCenter.z
-            << "]" << std::endl;
-        center += orbitCenter;
+        glm::dvec3 minCorner, maxCorner;
+        auto orbits = solver.randomSolution(4000, minCorner, maxCorner);
+        std::cout << "line " << curLine << std::setprecision(3) << " corners: " << 
+            "[" << minCorner.x << ", " << minCorner.y << ", " << minCorner.z << "]-" << 
+            "[" << maxCorner.x << ", " << maxCorner.y << ", " << maxCorner.z << "]" << std::endl;
+        center += (minCorner + maxCorner)*0.5;
         lines.push_back(orbits[0]);
         colors.push_back(orbits[1]);
     }

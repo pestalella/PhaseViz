@@ -1,5 +1,6 @@
 #include "ThreeBodySolver.h"
 
+#include <algorithm>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -112,7 +113,7 @@ ThreeBodySolver::ThreeBodySolver()
 }
 
 std::vector<std::vector<float>> ThreeBodySolver::randomSolution(
-    int numPoints, glm::dvec3 &orbitCenter)
+    int numPoints, glm::dvec3 &minCorner, glm::dvec3 &maxCorner)
 {
     std::vector<float> orbitVertices;
     std::vector<float> orbitColor;
@@ -151,13 +152,14 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(
 
     glm::dvec3 accum(0);
 
-    orbitCenter = glm::dvec3(0);
     glm::dvec3 lastVert(0);
     glm::dvec3 lastOrbitPoint(0);
 
     double tStep = 0.01;
 
 
+    minCorner = glm::dvec3(1E10);
+    maxCorner = glm::dvec3(-1E10);
     auto prevTime = std::chrono::high_resolution_clock::now();
     while (numVerts < numPoints) {
         advanceStep(tStep);
@@ -175,11 +177,15 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(
         }
         double distToLastVert = glm::length(projected - lastVert);
         lastOrbitPoint = projected;
-
         if ((distToLastVert > 5E-2) ||
             ((distToLastVert > 1E-2) && (numSteps % 100 == 1))) {
             lastVert = projected;
-            orbitCenter += projected;
+            minCorner.x = (std::min)(minCorner.x, projected.x);
+            minCorner.y = (std::min)(minCorner.y, projected.y);
+            minCorner.z = (std::min)(minCorner.z, projected.z);
+            maxCorner.x = (std::max)(maxCorner.x, projected.x);
+            maxCorner.y = (std::max)(maxCorner.y, projected.y);
+            maxCorner.z = (std::max)(maxCorner.z, projected.z);
             orbitVertices.push_back(projected[0]);
             orbitVertices.push_back(projected[1]);
             orbitVertices.push_back(projected[2]);
@@ -199,10 +205,11 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(
         "    Total steps:" << numSteps << std::endl <<
         "       Vertices:" << numVerts << std::endl <<
         "       Time(ms):" << duration << std::endl <<
-        "        Steps/s:" << numSteps*1000.0/duration << std::endl;
+        "        Steps/s:" << numSteps*1000.0/duration << std::endl <<
+        "        Corners:" << "[" << std::setprecision(3) << minCorner.x << ", " << minCorner.y << ", " << minCorner.z << "]" << std::endl <<
+        "                " << "[" << std::setprecision(3) << maxCorner.x << ", " << maxCorner.y << ", " << maxCorner.z << "]" << std::endl;
 
-    orbitCenter *= 1.0/numVerts;
-    return std::vector<std::vector<float>>({ orbitVertices, orbitColor });
+        return std::vector<std::vector<float>>({ orbitVertices, orbitColor });
 }
 
 void ThreeBodySolver::advanceStep(double tStep)
