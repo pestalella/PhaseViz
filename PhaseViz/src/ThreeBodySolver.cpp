@@ -91,15 +91,13 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(
 
     glm::vec3 color = randomVector(0.5) + glm::dvec3(0.5);
 
-    glm::dvec3 accum(0);
-
     glm::dvec3 lastVert(0);
     glm::dvec3 lastOrbitPoint(0);
+    minCorner = glm::dvec3(1E10);
+    maxCorner = glm::dvec3(-1E10);
 
     double tStep = 0.01;
 
-    minCorner = glm::dvec3(1E10);
-    maxCorner = glm::dvec3(-1E10);
     auto prevTime = std::chrono::high_resolution_clock::now();
     while (numVerts < numPoints) {
         advanceStep(tStep);
