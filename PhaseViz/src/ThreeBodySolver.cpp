@@ -1,49 +1,11 @@
 #include "ThreeBodySolver.h"
+#include "utils.h"
 
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
-
-glm::dvec3 randomVector(double scale = 1.0)
-{
-    return glm::dvec3((rand() / (RAND_MAX + 1.0) - 0.5) * scale,
-        (rand() / (RAND_MAX + 1.0) - 0.5) * scale,
-        (rand() / (RAND_MAX + 1.0) - 0.5) * scale);
-}
-
-ThreeBodySystem randomSystem()
-{
-    Body body0 = { randomVector(0.1), randomVector(0) };
-    Body body1 = { randomVector(0.1), randomVector(0) };
-    Body body2 = { randomVector(0.1), randomVector(0) };
-
-    const glm::vec3 bias1(20, 10, 0);
-    const glm::vec3 bias2(-10, 0, 0);
-    const glm::vec3 bias3(0, -10, 0);
-    body0.position += bias1;
-    body1.position += bias2;
-    body2.position += bias3;
-
-    glm::dvec3 center =
-        1/3.0*(body0.position + body1.position + body2.position);
-    //  glm::dvec3 center(0);
-    glm::vec3 velocity =
-        1/3.0*(body0.velocity + body1.velocity + body2.velocity);
-    //    glm::dvec3 velocity(0);
-
-    // Center the system around the origin of coords
-    body0.position -= center;
-    body1.position -= center;
-    body2.position -= center;
-    // Remove system velocity
-    body0.velocity -= velocity;
-    body1.velocity -= velocity;
-    body2.velocity -= velocity;
-
-    return { body0, body1, body2 };
-}
 
 SystemAccels computeAccelerations(ThreeBodySystem s)
 {
@@ -68,40 +30,39 @@ ThreeBodySolver::ThreeBodySolver() :
 {
 }
 
-void ThreeBodySolver::updateOccupancy(glm::dvec3 const &p)
+void ThreeBodySolver::updateOccupancy(glm::vec3 const &p)
 {
 
 }
 
-bool ThreeBodySolver::isOccupied(glm::dvec3 const &p)
+bool ThreeBodySolver::isOccupied(glm::vec3 const &p)
 {
     return false;
 }
 
-std::vector<std::vector<float>> ThreeBodySolver::randomSolution(
-    int numPoints, glm::dvec3 &minCorner, glm::dvec3 &maxCorner)
+std::vector<std::vector<float>> ThreeBodySolver::computeOrbit(
+    ThreeBodySystem const &tbs, int numPoints,
+    glm::vec3 &minCorner, glm::vec3 &maxCorner)
 {
     std::vector<float> orbitVertices;
     std::vector<float> orbitColor;
-
-    tbs = randomSystem();
 
     int numSteps = 0;
     int numVerts = 0;
 
     glm::vec3 color = randomVector(0.5) + glm::dvec3(0.5);
 
-    glm::dvec3 lastVert(0);
-    glm::dvec3 lastOrbitPoint(0);
-    minCorner = glm::dvec3(1E10);
-    maxCorner = glm::dvec3(-1E10);
+    glm::vec3 lastVert(0);
+    glm::vec3 lastOrbitPoint(0);
+    minCorner = glm::vec3(1E10);
+    maxCorner = glm::vec3(-1E10);
 
     double tStep = 0.01;
 
     auto prevTime = std::chrono::high_resolution_clock::now();
     while (numVerts < numPoints) {
         advanceStep(tStep);
-        auto projected = p.phaseSpaceToVizSpace(tbs);
+        glm::vec3 projected = p.phaseSpaceToVizSpace(tbs);
         double distToLastPoint = glm::length(projected - lastOrbitPoint);
 
         if (distToLastPoint > 1E-3 && numSteps != 0) {
@@ -147,7 +108,7 @@ std::vector<std::vector<float>> ThreeBodySolver::randomSolution(
         "        Corners:" << "[" << std::setprecision(3) << minCorner.x << ", " << minCorner.y << ", " << minCorner.z << "]" << std::endl <<
         "                " << "[" << std::setprecision(3) << maxCorner.x << ", " << maxCorner.y << ", " << maxCorner.z << "]" << std::endl;
 
-        return std::vector<std::vector<float>>({ orbitVertices, orbitColor });
+    return std::vector<std::vector<float>>({ orbitVertices, orbitColor });
 }
 
 void ThreeBodySolver::advanceStep(double tStep)

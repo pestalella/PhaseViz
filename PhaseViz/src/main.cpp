@@ -8,6 +8,7 @@ const double M_PI = 3.141592653589793238462643;
 
 #include "RenderGL.h"
 #include "ThreeBodySolver.h"
+#include "utils.h"
 
 #include <GL/glew.h>
 #include <GL/glut.h>
@@ -21,6 +22,39 @@ std::shared_ptr<RenderGL> phaseRender;
 ThreeBodySolver solver;
 Axis drawnAxis = Axis::POS0;
 
+ThreeBodySystem randomSystem()
+{
+    Body body0 = { randomVector(0.1), randomVector(0) };
+    Body body1 = { randomVector(0.1), randomVector(0) };
+    Body body2 = { randomVector(0.1), randomVector(0) };
+
+    const glm::vec3 bias1(20, 10, 0);
+    const glm::vec3 bias2(-10, 0, 0);
+    const glm::vec3 bias3(0, -10, 0);
+    body0.position += bias1;
+    body1.position += bias2;
+    body2.position += bias3;
+
+    glm::dvec3 center =
+        1/3.0*(body0.position + body1.position + body2.position);
+    //  glm::dvec3 center(0);
+    glm::vec3 velocity =
+        1/3.0*(body0.velocity + body1.velocity + body2.velocity);
+    //    glm::dvec3 velocity(0);
+
+    // Center the system around the origin of coords
+    body0.position -= center;
+    body1.position -= center;
+    body2.position -= center;
+    // Remove system velocity
+    body0.velocity -= velocity;
+    body1.velocity -= velocity;
+    body2.velocity -= velocity;
+
+    return { body0, body1, body2 };
+}
+
+
 void generateData()
 {
     std::cout << "Generating data..." << std::endl;
@@ -28,23 +62,23 @@ void generateData()
 
     std::vector<std::vector<float>> lines;
     std::vector<std::vector<float>> colors;
-    glm::dvec3 center(0);
+    glm::vec3 center(0);
     for (int curLine = 0; curLine < numLines; ++curLine) {
-        glm::dvec3 minCorner, maxCorner;
-        auto orbits = solver.randomSolution(4000, minCorner, maxCorner);
+        glm::vec3 minCorner, maxCorner;
+        auto tbs = randomSystem();
+        auto orbits = solver.computeOrbit(tbs, 4000, minCorner, maxCorner);
         std::cout << "line " << curLine << std::setprecision(3) << " corners: " << 
             "[" << minCorner.x << ", " << minCorner.y << ", " << minCorner.z << "]-" << 
             "[" << maxCorner.x << ", " << maxCorner.y << ", " << maxCorner.z << "]" << std::endl;
-        center += (minCorner + maxCorner)*0.5;
+        center += (minCorner + maxCorner)*0.5f;
         lines.push_back(orbits[0]);
         colors.push_back(orbits[1]);
     }
 
     center *= 1.0/numLines;
-
     for (int curLine = 0; curLine < numLines; ++curLine) {
-        int numVerts = lines[curLine].size()/3;
-        for (int i = 0; i < numVerts; ++i) {
+        size_t numVerts = lines[curLine].size()/3;
+        for (unsigned int i = 0; i < numVerts; ++i) {
             lines[curLine][3*i + 0] -= center.x;
             lines[curLine][3*i + 1] -= center.y;
             lines[curLine][3*i + 2] -= center.z;

@@ -216,7 +216,7 @@ void RenderGL::display()
 
     // finally draw a cube with glDrawElements()
     glLineWidth(3.0);
-    for (int i = 0; i < numLines; ++i) {
+    for (unsigned int i = 0; i < numLines; ++i) {
         int indexOffset = 4 * i * numPoints / numLines;
         glDrawElements(GL_LINE_STRIP,
             numPoints/numLines,
@@ -270,7 +270,7 @@ float timeMultiplier()
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - prevTime).count();
     prevTime = curTime;
     if (duration < 100) {
-        multiplier *= 1.05;
+        multiplier *= 1.05f;
         multiplier = multiplier > 10.0f ? 10.0f : multiplier;
     } else
         multiplier = 1.0f;
@@ -336,11 +336,11 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
     std::cout << "==              Total size:"
         << numPoints * 3 * sizeof(float) / 1024 << " kB" << std::endl;
 
-    int curVertexIndex = 0;
-    for (int curLine = 0; curLine < numLines; ++curLine) {
+    unsigned int curVertexIndex = 0;
+    for (unsigned int curLine = 0; curLine < numLines; ++curLine) {
 
-        int curLineVerts = lines[curLine].size() / 3;
-        for (int i = 0; i < curLineVerts; ++i) {
+        size_t curLineVerts = lines[curLine].size() / 3;
+        for (unsigned int i = 0; i < curLineVerts; ++i) {
             indices[curVertexIndex] = curVertexIndex;
             curVertexIndex++;
         }
@@ -375,5 +375,5 @@ void RenderGL::setProjAxes(glm::mat3 const &axes)
     //    "[" << std::setprecision(3) << axes[0][0] << ", " << axes[0][1] << ", " << axes[0][2] << "]" << std::endl <<
     //    "[" << std::setprecision(3) << axes[1][0] << ", " << axes[1][1] << ", " << axes[1][2] << "]" << std::endl <<
     //    "[" << std::setprecision(3) << axes[2][0] << ", " << axes[2][1] << ", " << axes[2][2] << "]" << std::endl;
-    projAxes = glm::scale(glm::mat4(axes), glm::vec3(0.1));
+    projAxes = glm::scale(glm::mat4(axes), glm::vec3(0.1f));
 }

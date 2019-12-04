@@ -21,8 +21,8 @@ public:
     void setProjAxes(glm::mat3 const &axes);
 
 private:
-    int numPoints;
-    int numLines;
+    unsigned int numPoints;
+    unsigned int numLines;
 
     GLuint vboId;
     GLuint iboId;

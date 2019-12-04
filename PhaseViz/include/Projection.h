@@ -17,7 +17,7 @@ public:
     glm::dvec3 phaseSpaceToVizSpace(ThreeBodySystem const &s);
     glm::mat3x3 projMatrix(Axis selectedAxis);
 private:
-    glm::mat3x3 positions[3];
-    glm::mat3x3 velocities[3];
+    glm::dmat3x3 positions[3];
+    glm::dmat3x3 velocities[3];
 };
 
