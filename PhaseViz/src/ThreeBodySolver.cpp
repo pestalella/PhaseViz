@@ -18,9 +18,6 @@ void Projection::createMatrix()
     std::vector<double> rowZ(18);
 
     for (int i = 0; i < 18; ++i) {
-        //rowX[i] = (rand() / (RAND_MAX + 1.0));
-        //rowY[i] = (rand() / (RAND_MAX + 1.0));
-        //rowZ[i] = (rand() / (RAND_MAX + 1.0));
         rowX[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;
         rowY[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;
         rowZ[i] = (rand() / (RAND_MAX + 1.0) - 0.5)*2;

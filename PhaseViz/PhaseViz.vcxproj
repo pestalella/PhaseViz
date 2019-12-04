@@ -150,6 +150,7 @@
     <ClCompile Include="src\ThreeBodySolver.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Projection.h" />
     <ClInclude Include="include\RenderGL.h" />
     <ClInclude Include="include\ThreeBodySolver.h" />
   </ItemGroup>

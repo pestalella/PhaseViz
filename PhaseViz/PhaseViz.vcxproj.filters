@@ -46,5 +46,8 @@
     <ClInclude Include="include\ThreeBodySolver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Projection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
