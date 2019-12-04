@@ -5,26 +5,36 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-struct Body {
+struct Body 
+{
     glm::dvec3 position;
     glm::dvec3 velocity;
 };
 
-struct SystemAccels {
+struct ThreeBodySystem
+{
+    Body body0, body1, body2;
+};
+
+struct SystemAccels 
+{
     glm::dvec3 a1, a2, a3;
 };
 
-class ThreeBodySolver {
+class ThreeBodySolver 
+{
 public:
     ThreeBodySolver();
+    void updateOccupancy(glm::dvec3 const &p);
+    bool isOccupied(glm::dvec3 const &p);
     std::vector<std::vector<float>> randomSolution(int numSteps,
         glm::dvec3 &minCorner, glm::dvec3 &maxCorner);
     void advanceStep(double tStep);
     glm::mat3 projectionAxes(Axis selectedAxis);
 
-    Body bodies[3];
+    ThreeBodySystem tbs;
 
 private:
     Projection p;
-    int occupancy[10][10][10];
+    std::vector<int> occupancy;
 };

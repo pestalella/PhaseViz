@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-class Body;
+class ThreeBodySystem;
 
 enum Axis {
     POS0, VEL0, POS1, VEL1, POS2, VEL2, AXIS_NELEMS
@@ -14,8 +14,7 @@ public:
 
     void createMatrix();
 
-    glm::dvec3 phaseSpaceToVizSpace(Body const &b0, Body const &b1,
-        Body const &b2);
+    glm::dvec3 phaseSpaceToVizSpace(ThreeBodySystem const &s);
     glm::mat3x3 projMatrix(Axis selectedAxis);
 private:
     glm::mat3x3 positions[3];

@@ -50,10 +50,10 @@ void Projection::createMatrix()
     }
 }
 
-glm::dvec3 Projection::phaseSpaceToVizSpace(Body const &b0, Body const &b1, Body const &b2)
+glm::dvec3 Projection::phaseSpaceToVizSpace(ThreeBodySystem const &s)
 {
-    glm::dvec3 r = positions[0]*b0.position + positions[1]*b1.position + positions[2]*b2.position +
-        velocities[0]*b0.velocity + velocities[1]*b1.velocity + velocities[2]*b2.velocity;
+    glm::dvec3 r = positions[0]*s.body0.position + positions[1]*s.body1.position + positions[2]*s.body2.position +
+        velocities[0]*s.body0.velocity + velocities[1]*s.body1.velocity + velocities[2]*s.body2.velocity;
     return r;
 }
 
