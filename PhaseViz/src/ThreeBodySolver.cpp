@@ -41,7 +41,7 @@ bool ThreeBodySolver::isOccupied(glm::vec3 const &p)
 }
 
 std::vector<std::vector<float>> ThreeBodySolver::computeOrbit(
-    ThreeBodySystem const &tbs, int numPoints,
+    ThreeBodySystem &tbs, int numPoints,
     glm::vec3 &minCorner, glm::vec3 &maxCorner)
 {
     std::vector<float> orbitVertices;
@@ -61,13 +61,13 @@ std::vector<std::vector<float>> ThreeBodySolver::computeOrbit(
 
     auto prevTime = std::chrono::high_resolution_clock::now();
     while (numVerts < numPoints) {
-        advanceStep(tStep);
+        advanceStep(tbs, tStep);
         glm::vec3 projected = p.phaseSpaceToVizSpace(tbs);
         double distToLastPoint = glm::length(projected - lastOrbitPoint);
 
         if (distToLastPoint > 1E-3 && numSteps != 0) {
             // Undo last step 
-            advanceStep(-tStep);
+            advanceStep(tbs, -tStep);
             tStep *= 0.5;
             continue;
         } else if (distToLastPoint < 1E-4) {
@@ -111,7 +111,7 @@ std::vector<std::vector<float>> ThreeBodySolver::computeOrbit(
     return std::vector<std::vector<float>>({ orbitVertices, orbitColor });
 }
 
-void ThreeBodySolver::advanceStep(double tStep)
+void ThreeBodySolver::advanceStep(ThreeBodySystem &tbs, double tStep)
 {
     auto accels = computeAccelerations(tbs);
     tbs.body0.position += tStep * (tbs.body0.velocity + tStep / 2.0 * accels.a1);

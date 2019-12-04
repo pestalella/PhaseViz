@@ -28,12 +28,10 @@ public:
     ThreeBodySolver();
     void updateOccupancy(glm::vec3 const &p);
     bool isOccupied(glm::vec3 const &p);
-    std::vector<std::vector<float>> computeOrbit(ThreeBodySystem const &tbs,
+    std::vector<std::vector<float>> computeOrbit(ThreeBodySystem &tbs,
         int numSteps, glm::vec3 &minCorner, glm::vec3 &maxCorner);
-    void advanceStep(double tStep);
+    void advanceStep(ThreeBodySystem &tbs, double tStep);
     glm::mat3 projectionAxes(Axis selectedAxis);
-
-    ThreeBodySystem tbs;
 
 private:
     Projection p;
