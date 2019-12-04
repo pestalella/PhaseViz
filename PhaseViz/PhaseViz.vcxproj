@@ -146,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Projection.cpp" />
     <ClCompile Include="src\RenderGL.cpp" />
     <ClCompile Include="src\ThreeBodySolver.cpp" />
   </ItemGroup>
