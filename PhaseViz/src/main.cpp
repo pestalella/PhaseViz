@@ -10,10 +10,11 @@ const double M_PI = 3.141592653589793238462643;
 #include "ThreeBodySolver.h"
 #include "utils.h"
 
-#include <GL/glew.h>
-#include <GL/glut.h>
+#include <algorithm>
 #include <cmath>
 #include <ctime>
+#include <GL/glew.h>
+#include <GL/glut.h>
 #include <iomanip>
 #include <iostream>
 #include <memory>
@@ -24,22 +25,24 @@ Axis drawnAxis = Axis::POS0;
 
 ThreeBodySystem randomSystem()
 {
-    Body body0 = { randomVector(0.1), randomVector(0) };
-    Body body1 = { randomVector(0.1), randomVector(0) };
-    Body body2 = { randomVector(0.1), randomVector(0) };
+    Body body0 = {randomVector(1.0), randomVector(0)};
+    Body body1 = {randomVector(1.0), randomVector(0)};
+    Body body2 = {randomVector(1.0), randomVector(0)};
 
-    const glm::vec3 bias1(20, 10, 0);
-    const glm::vec3 bias2(-10, 0, 0);
-    const glm::vec3 bias3(0, -10, 0);
-    body0.position += bias1;
-    body1.position += bias2;
-    body2.position += bias3;
+    //const glm::vec3 bias1(20, 10, 0);
+    //const glm::vec3 bias2(-10, 0, 0);
+    //const glm::vec3 bias3(0, -10, 0);
+    //body0.position += bias1;
+    //body1.position += bias2;
+    //body2.position += bias3;
 
-    glm::dvec3 center =
-        1/3.0*(body0.position + body1.position + body2.position);
+    body0.position.z = 0;
+    body1.position.z = 0;
+    body2.position.z = 0;
+
+    glm::dvec3 center = 1/3.0*(body0.position + body1.position + body2.position);
     //  glm::dvec3 center(0);
-    glm::vec3 velocity =
-        1/3.0*(body0.velocity + body1.velocity + body2.velocity);
+//    glm::dvec3 velocity = 1/3.0*(body0.velocity + body1.velocity + body2.velocity);
     //    glm::dvec3 velocity(0);
 
     // Center the system around the origin of coords
@@ -47,28 +50,52 @@ ThreeBodySystem randomSystem()
     body1.position -= center;
     body2.position -= center;
     // Remove system velocity
-    body0.velocity -= velocity;
-    body1.velocity -= velocity;
-    body2.velocity -= velocity;
+    //body0.velocity -= velocity;
+    //body1.velocity -= velocity;
+    //body2.velocity -= velocity;
 
-    return { body0, body1, body2 };
+    return {body0, body1, body2};
 }
 
+bool tooClose(glm::vec3 candidate, std::vector<glm::vec3> const &pointCloud)
+{
+    float minDistance = 1E10;
+    for (auto p: pointCloud) {
+        auto dist = glm::distance(candidate, p);
+        if (dist < 0.1) return true;
+        minDistance = (std::min)(dist, minDistance);
+    }
+    return minDistance > 0.15;
+}
 
 void generateData()
 {
-    std::cout << "Generating data..." << std::endl;
-    int numLines = 10;
+    std::vector<glm::vec3> startingPoints;
+
+    int numLines = 100;
 
     std::vector<std::vector<float>> lines;
     std::vector<std::vector<float>> colors;
     glm::vec3 center(0);
+
+    std::cout << "Generating data..." << std::endl;
     for (int curLine = 0; curLine < numLines; ++curLine) {
         glm::vec3 minCorner, maxCorner;
         auto tbs = randomSystem();
+        glm::vec3 curStartingPoint = solver.projectSystem(tbs);
+        int numRetries = 0;
+        if (!startingPoints.empty()) {
+            while (tooClose(curStartingPoint, startingPoints)) {
+                ++numRetries;
+                tbs = randomSystem();
+                curStartingPoint = solver.projectSystem(tbs);
+            }
+        }
+        std::cout << "Num retries:" << numRetries << std::endl;
+        startingPoints.push_back(curStartingPoint);
         auto orbits = solver.computeOrbit(tbs, 4000, minCorner, maxCorner);
-        std::cout << "line " << curLine << std::setprecision(3) << " corners: " << 
-            "[" << minCorner.x << ", " << minCorner.y << ", " << minCorner.z << "]-" << 
+        std::cout << "line " << curLine << std::setprecision(3) << " corners: " <<
+            "[" << minCorner.x << ", " << minCorner.y << ", " << minCorner.z << "]-" <<
             "[" << maxCorner.x << ", " << maxCorner.y << ", " << maxCorner.z << "]" << std::endl;
         center += (minCorner + maxCorner)*0.5f;
         lines.push_back(orbits[0]);
@@ -109,7 +136,7 @@ void reshape(int w, int h)
 void initGLRendering()
 {
     // set background color to Black
-    glClearColor(0.0, 0.0, 1.0, 0.0);
+    glClearColor(82/255.0f, 88/255.0f, 91/255.0f, 1.0);
     // set shade model to Flat
     glShadeModel(GL_FLAT);
 

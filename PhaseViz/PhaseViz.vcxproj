@@ -91,7 +91,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\Pau\source\repos\PhaseViz\PhaseViz\include;C:\Users\Pau\source\repos\freeglut\include;C:\Users\Pau\source\repos\glm;C:\Users\Pau\source\repos\glew-2.1.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Users\Pau\prog\PhaseViz\PhaseViz\include;C:\Users\Pau\source\repos\PhaseViz\PhaseViz\include;C:\Users\Pau\source\repos\freeglut\include;C:\Users\Pau\source\repos\glm;C:\Users\Pau\source\repos\glew-2.1.0\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,7 +127,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\Pau\source\repos\PhaseViz\PhaseViz\include;C:\Users\Pau\source\repos\freeglut\include;C:\Users\Pau\source\repos\glm;C:\Users\Pau\source\repos\glew-2.1.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Users\Pau\prog\PhaseViz\PhaseViz\include;C:\Users\Pau\source\repos\PhaseViz\PhaseViz\include;C:\Users\Pau\source\repos\freeglut\include;C:\Users\Pau\source\repos\glm;C:\Users\Pau\source\repos\glew-2.1.0\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

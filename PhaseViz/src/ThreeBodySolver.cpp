@@ -131,3 +131,8 @@ glm::mat3 ThreeBodySolver::projectionAxes(Axis selectedAxis)
     auto z = glm::normalize(pmat[2]);
     return glm::mat3(x, y, z);
 }
+
+glm::vec3 ThreeBodySolver::projectSystem(ThreeBodySystem const &tbs)
+{
+    return p.phaseSpaceToVizSpace(tbs);
+}

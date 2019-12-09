@@ -32,6 +32,7 @@ public:
         int numSteps, glm::vec3 &minCorner, glm::vec3 &maxCorner);
     void advanceStep(ThreeBodySystem &tbs, double tStep);
     glm::mat3 projectionAxes(Axis selectedAxis);
+    glm::vec3 projectSystem(ThreeBodySystem const &tbs);
 
 private:
     Projection p;

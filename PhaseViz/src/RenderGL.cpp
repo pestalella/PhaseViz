@@ -215,7 +215,7 @@ void RenderGL::display()
     glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, (void *)cOffset);
 
     // finally draw a cube with glDrawElements()
-    glLineWidth(3.0);
+    glLineWidth(2.0);
     for (unsigned int i = 0; i < numLines; ++i) {
         int indexOffset = 4 * i * numPoints / numLines;
         glDrawElements(GL_LINE_STRIP,
