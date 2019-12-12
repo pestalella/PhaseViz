@@ -52,8 +52,8 @@ void Projection::createMatrix()
 
 glm::dvec3 Projection::phaseSpaceToVizSpace(ThreeBodySystem const &s)
 {
-    glm::dvec3 r = positions[0]*s.body0.position + positions[1]*s.body1.position + positions[2]*s.body2.position +
-        velocities[0]*s.body0.velocity + velocities[1]*s.body1.velocity + velocities[2]*s.body2.velocity;
+    glm::dvec3 r = positions[0]*s.body[0].position + positions[1]*s.body[1].position + positions[2]*s.body[2].position +
+        velocities[0]*s.body[0].velocity + velocities[1]*s.body[1].velocity + velocities[2]*s.body[2].velocity;
     return r;
 }
 

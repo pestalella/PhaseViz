@@ -170,6 +170,22 @@ void RenderGL::update()
 //}
 //
 
+void renderString(float x, float y, void *font, const char *text, glm::vec3 const &rgb)
+{
+    glColor3f(rgb.r, rgb.g, rgb.b);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glRasterPos2f(x, y);
+
+    auto c = text;
+    while (*c != '\0') {
+        glutBitmapCharacter(font, *c++);
+    }
+}
+
 void RenderGL::display()
 {
     // clearing the window or remove all drawn objects
@@ -230,7 +246,10 @@ void RenderGL::display()
     // unbind VBOs
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    
+    glUseProgram(0);
+
+    renderString(0.8, -0.9, GLUT_BITMAP_TIMES_ROMAN_10, "HELLO!", glm::vec3(1,0.7,0));
+
     glutSwapBuffers();
 }
 
@@ -367,6 +386,8 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(),
         &indices[0], GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    glutPostRedisplay();
 }
 
 void RenderGL::setProjAxes(glm::mat3 const &axes)

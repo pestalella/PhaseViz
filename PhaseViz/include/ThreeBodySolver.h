@@ -14,7 +14,7 @@ struct Body
 class ThreeBodySystem
 {
 public:
-    Body body0, body1, body2;
+    Body body[3];
 };
 
 struct SystemAccels
@@ -28,13 +28,14 @@ public:
     ThreeBodySolver();
     void updateOccupancy(glm::vec3 const &p);
     bool isOccupied(glm::vec3 const &p);
-    std::vector<std::vector<float>> computeOrbit(ThreeBodySystem &tbs,
-        int numSteps, glm::vec3 &minCorner, glm::vec3 &maxCorner);
+    std::pair<std::vector<ThreeBodySystem>, std::vector<float>> computeOrbit(ThreeBodySystem &tbs, int numSteps);
     void advanceStep(ThreeBodySystem &tbs, double tStep);
     glm::mat3 projectionAxes(Axis selectedAxis);
     glm::vec3 projectSystem(ThreeBodySystem const &tbs);
+    void nextColoredBody() { coloredBody = (coloredBody+1)%3; }
 
 private:
     Projection p;
     std::vector<int> occupancy;
+    int coloredBody;
 };

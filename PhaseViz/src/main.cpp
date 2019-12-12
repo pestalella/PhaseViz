@@ -25,9 +25,10 @@ Axis drawnAxis = Axis::POS0;
 
 ThreeBodySystem randomSystem()
 {
-    Body body0 = {randomVector(1.0), randomVector(0)};
-    Body body1 = {randomVector(1.0), randomVector(0)};
-    Body body2 = {randomVector(1.0), randomVector(0)};
+    float radius = 0.2;
+    Body body0 = {randomVector(radius), randomVector(0)};
+    Body body1 = {randomVector(radius), randomVector(0)};
+    Body body2 = {randomVector(radius), randomVector(0)};
 
     //const glm::vec3 bias1(20, 10, 0);
     //const glm::vec3 bias2(-10, 0, 0);
@@ -40,15 +41,19 @@ ThreeBodySystem randomSystem()
     body1.position.z = 0;
     body2.position.z = 0;
 
-    glm::dvec3 center = 1/3.0*(body0.position + body1.position + body2.position);
-    //  glm::dvec3 center(0);
+    //    glm::dvec3 offset = 1/3.0*(body0.position + body1.position + body2.position);
+    glm::dvec3 posOffset = body0.position;
+    //  glm::dvec3 offset(0);
 //    glm::dvec3 velocity = 1/3.0*(body0.velocity + body1.velocity + body2.velocity);
     //    glm::dvec3 velocity(0);
 
     // Center the system around the origin of coords
-    body0.position -= center;
-    body1.position -= center;
-    body2.position -= center;
+    body0.position -= posOffset;
+    body1.position -= posOffset;
+    body2.position -= posOffset;
+    body1.position.y = -1.0;
+    body2.position.y = 2.0;
+
     // Remove system velocity
     //body0.velocity -= velocity;
     //body1.velocity -= velocity;
@@ -68,53 +73,64 @@ bool tooClose(glm::vec3 candidate, std::vector<glm::vec3> const &pointCloud)
     return minDistance > 0.15;
 }
 
+std::vector<std::vector<ThreeBodySystem>> states;
+std::vector<std::vector<float>> lines;
+int coloredBody = 0;
+
+std::vector<std::vector<float>> computeColors()
+{
+    std::vector<std::vector<float>> colors;
+    for (auto curOrbit : states) {
+        std::vector<float> orbitColor;
+        for (auto state : curOrbit) {
+            orbitColor.push_back(glm::length(state.body[coloredBody].velocity)*0.01);
+            orbitColor.push_back(state.body[coloredBody].position.x*state.body[coloredBody].position.x*10.0);
+            orbitColor.push_back(state.body[coloredBody].position.y*state.body[coloredBody].position.y*10.0);
+        }
+        colors.push_back(orbitColor);
+    }
+    return colors;
+}
+
 void generateData()
 {
     std::vector<glm::vec3> startingPoints;
 
-    int numLines = 100;
+    int numLines = 1;
 
-    std::vector<std::vector<float>> lines;
-    std::vector<std::vector<float>> colors;
-    glm::vec3 center(0);
+//    std::vector<std::vector<ThreeBodySystem>> states;
+//    std::vector<std::vector<float>> lines;
 
     std::cout << "Generating data..." << std::endl;
     for (int curLine = 0; curLine < numLines; ++curLine) {
-        glm::vec3 minCorner, maxCorner;
         auto tbs = randomSystem();
-        glm::vec3 curStartingPoint = solver.projectSystem(tbs);
-        int numRetries = 0;
-        if (!startingPoints.empty()) {
-            while (tooClose(curStartingPoint, startingPoints)) {
-                ++numRetries;
-                tbs = randomSystem();
-                curStartingPoint = solver.projectSystem(tbs);
-            }
-        }
-        std::cout << "Num retries:" << numRetries << std::endl;
-        startingPoints.push_back(curStartingPoint);
-        auto orbits = solver.computeOrbit(tbs, 4000, minCorner, maxCorner);
-        std::cout << "line " << curLine << std::setprecision(3) << " corners: " <<
-            "[" << minCorner.x << ", " << minCorner.y << ", " << minCorner.z << "]-" <<
-            "[" << maxCorner.x << ", " << maxCorner.y << ", " << maxCorner.z << "]" << std::endl;
-        center += (minCorner + maxCorner)*0.5f;
-        lines.push_back(orbits[0]);
-        colors.push_back(orbits[1]);
+        auto orbits = solver.computeOrbit(tbs, 8000);
+        std::cout << "line " << curLine << std::endl;
+        states.push_back(orbits.first);
+        lines.push_back(orbits.second);
     }
 
-    center *= 1.0/numLines;
-    for (int curLine = 0; curLine < numLines; ++curLine) {
-        size_t numVerts = lines[curLine].size()/3;
-        for (unsigned int i = 0; i < numVerts; ++i) {
-            lines[curLine][3*i + 0] -= center.x;
-            lines[curLine][3*i + 1] -= center.y;
-            lines[curLine][3*i + 2] -= center.z;
-        }
-    }
+    //for (int curLine = 0; curLine < numLines; ++curLine) {
+    //    size_t numVerts = lines[curLine].size()/3;
+    //    for (unsigned int i = 0; i < numVerts; ++i) {
+    //        lines[curLine][3*i + 0] -= center.x;
+    //        lines[curLine][3*i + 1] -= center.y;
+    //        lines[curLine][3*i + 2] -= center.z;
+    //    }
+    //}
+
+    auto colors = computeColors();
 
     std::cout << "Sending data to renderer." << std::endl;
     phaseRender->updateData(lines, colors);
     phaseRender->setProjAxes(solver.projectionAxes(drawnAxis));
+}
+
+void updateColors()
+{
+    auto colors = computeColors();
+    std::cout << "Sending data to renderer." << std::endl;
+    phaseRender->updateData(lines, colors);
 }
 
 void updateRender(void)
@@ -184,13 +200,16 @@ void keyPressed(unsigned char key, int a, int b)
         drawnAxis = (Axis)((drawnAxis+1)%AXIS_NELEMS);
         phaseRender->setProjAxes(solver.projectionAxes(drawnAxis));
         glutPostRedisplay();
+    } else if (key == 'c') {
+        coloredBody = (coloredBody + 1)%3;
+        updateColors();
     }
 }
 
 // main function
 int main(int argc, char **argv)
 {
-    srand(42);
+    srand(time(NULL));
     //    srand(time(NULL));
     // initialize glut
     glutInit(&argc, argv);
