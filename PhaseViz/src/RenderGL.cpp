@@ -396,5 +396,5 @@ void RenderGL::setProjAxes(glm::mat3 const &axes)
     //    "[" << std::setprecision(3) << axes[0][0] << ", " << axes[0][1] << ", " << axes[0][2] << "]" << std::endl <<
     //    "[" << std::setprecision(3) << axes[1][0] << ", " << axes[1][1] << ", " << axes[1][2] << "]" << std::endl <<
     //    "[" << std::setprecision(3) << axes[2][0] << ", " << axes[2][1] << ", " << axes[2][2] << "]" << std::endl;
-    projAxes = glm::scale(glm::mat4(axes), glm::vec3(0.1f));
+    projAxes = glm::mat3(glm::scale(glm::mat4(axes), glm::vec3(0.1f)));
 }

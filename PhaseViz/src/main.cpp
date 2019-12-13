@@ -25,7 +25,7 @@ Axis drawnAxis = Axis::POS0;
 
 ThreeBodySystem randomSystem()
 {
-    float radius = 0.2;
+    float radius = 0.1;
     Body body0 = {randomVector(radius), randomVector(0)};
     Body body1 = {randomVector(radius), randomVector(0)};
     Body body2 = {randomVector(radius), randomVector(0)};
@@ -96,16 +96,19 @@ void generateData()
 {
     std::vector<glm::vec3> startingPoints;
 
-    int numLines = 1;
+    int numLines = 100;
 
 //    std::vector<std::vector<ThreeBodySystem>> states;
 //    std::vector<std::vector<float>> lines;
 
     std::cout << "Generating data..." << std::endl;
-    for (int curLine = 0; curLine < numLines; ++curLine) {
+
+    #pragma omp parallel
+    #pragma omp for
+    for (int i = 0; i < numLines; ++i) {
         auto tbs = randomSystem();
         auto orbits = solver.computeOrbit(tbs, 8000);
-        std::cout << "line " << curLine << std::endl;
+        std::cout << "line " << i << std::endl;
         states.push_back(orbits.first);
         lines.push_back(orbits.second);
     }
