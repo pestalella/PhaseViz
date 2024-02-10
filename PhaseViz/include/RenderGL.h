@@ -20,7 +20,16 @@ public:
                     std::vector<std::vector<float>> const& colors);
     void setProjAxes(glm::mat3 const &axes);
 
+
+//    void mouseDrag(int x, int y);
+    void mouseClick(int button, int state, int x, int y);
+    void keyPressed(unsigned char key, int a, int b);
+
+
 private:
+    // GL UI stuff
+    int dragPrevX = 0, dragPrevY = 0;
+
     unsigned int numPoints;
     unsigned int numLines;
 
@@ -35,8 +44,9 @@ private:
     glm::mat4 modelViewProjMat;
     glm::mat4 projMat;
     glm::mat4 viewMat;
-    
+
     glm::mat3 projAxes;
 //    ThreeBodySolver solv3;
 };
 
+void initGLRendering(int argc, char **argv);

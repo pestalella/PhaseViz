@@ -32,10 +32,8 @@ public:
     void advanceStep(ThreeBodySystem &tbs, double tStep);
     glm::mat3 projectionAxes(Axis selectedAxis);
     glm::vec3 projectSystem(ThreeBodySystem const &tbs);
-    void nextColoredBody() { coloredBody = (coloredBody+1)%3; }
 
 private:
     Projection p;
     std::vector<int> occupancy;
-    int coloredBody;
 };

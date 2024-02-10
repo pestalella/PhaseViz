@@ -27,8 +27,8 @@ SystemAccels computeAccelerations(ThreeBodySystem s)
 }
 
 ThreeBodySolver::ThreeBodySolver() :
-    occupancy(10*10*10, 0),
-    coloredBody(0)
+    occupancy(10*10*10, 0)
+//    coloredBody(0)
 {
 }
 
@@ -65,7 +65,7 @@ std::pair<std::vector<ThreeBodySystem>, std::vector<float>> ThreeBodySolver::com
         double distToLastPoint = glm::length(projected - lastOrbitPoint);
 
         if (distToLastPoint > 1E-3 && numSteps != 0) {
-            // Undo last step 
+            // Undo last step
             advanceStep(tbs, -tStep);
             tStep *= 0.5;
             continue;
@@ -88,12 +88,12 @@ std::pair<std::vector<ThreeBodySystem>, std::vector<float>> ThreeBodySolver::com
     }
     auto curTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - prevTime).count();
-    std::cout << "* Orbit stats" << std::endl <<
-        "---------------" << std::endl <<
-        "    Total steps:" << numSteps << std::endl <<
-        "       Vertices:" << numVerts << std::endl <<
-        "       Time(ms):" << duration << std::endl <<
-        "        Steps/s:" << numSteps*1000.0/duration << std::endl;
+    // std::cout << "* Orbit stats" << std::endl <<
+    //     "---------------" << std::endl <<
+    //     "    Total steps:" << numSteps << std::endl <<
+    //     "       Vertices:" << numVerts << std::endl <<
+    //     "       Time(ms):" << duration << std::endl <<
+    //     "        Steps/s:" << numSteps*1000.0/duration << std::endl;
 
     return std::make_pair(orbitStates, orbitVertices);
 }

@@ -1,4 +1,15 @@
+#if defined(_WIN32) || defined(WIN32)
+#include <Windows.h>
+const double M_PI = 3.141592653589793238462643;
+#elif defined __unix__
+#include <unistd.h>
+#define Sleep(a) usleep((a)*1000)
+#endif
+
 #include "RenderGL.h"
+#include "OrbitGenerator.h"
+#include "utils.h"
+
 
 #include <chrono>
 #include <GL/glew.h>
@@ -8,75 +19,53 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <memory>
 
-#if defined(_WIN32) || defined(WIN32)
-const double M_PI = 3.141592653589793238462643;
-#endif
-
-GLuint loadShaders(std::string const &vertexFilePath,
-    std::string const &fragmentFilePath)
+GLuint loadAndCompile(std::string const &shaderFile, GLenum shader_type)
 {
-    // Create the shaders
-    GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-    GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint shaderID = glCreateShader(shader_type);
 
-    // Read the Vertex Shader code from the file
-    std::string vertexShaderCode;
-    std::ifstream vertexShaderStream(vertexFilePath, std::ios::in);
-    if (vertexShaderStream.is_open()) {
+    // Read the Shader code from the file
+    std::string shaderCode;
+    std::ifstream shaderStream(shaderFile, std::ios::in);
+    if (shaderStream.is_open()) {
         std::stringstream sstr;
-        sstr << vertexShaderStream.rdbuf();
-        vertexShaderCode = sstr.str();
-        vertexShaderStream.close();
+        sstr << shaderStream.rdbuf();
+        shaderCode = sstr.str();
+        shaderStream.close();
     } else {
-        std::cout << "Unable to open " << vertexFilePath << std::endl;
+        std::cout << "Unable to open " << shaderFile << std::endl;
         return 0;
-    }
-
-    // Read the Fragment Shader code from the file
-    std::string fragmentShaderCode;
-    std::ifstream fragmentShaderStream(fragmentFilePath, std::ios::in);
-    if (fragmentShaderStream.is_open()) {
-        std::stringstream sstr;
-        sstr << fragmentShaderStream.rdbuf();
-        fragmentShaderCode = sstr.str();
-        fragmentShaderStream.close();
     }
 
     GLint result = GL_FALSE;
     int infoLogLength;
 
-    // Compile Vertex Shader
-    std::cout << "Compiling shader : " << vertexFilePath << std::endl;
-    char const *vertexSourcePointer = vertexShaderCode.c_str();
-    glShaderSource(vertexShaderID, 1, &vertexSourcePointer, NULL);
-    glCompileShader(vertexShaderID);
+    // Compile Shader
+    std::cout << "Compiling shader : " << shaderFile << std::endl;
+    char const *sourcePointer = shaderCode.c_str();
+    glShaderSource(shaderID, 1, &sourcePointer, NULL);
+    glCompileShader(shaderID);
 
-    // Check Vertex Shader
-    glGetShaderiv(vertexShaderID, GL_COMPILE_STATUS, &result);
-    glGetShaderiv(vertexShaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
+    // Check Shader
+    glGetShaderiv(shaderID, GL_COMPILE_STATUS, &result);
+    glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
     if (infoLogLength > 0) {
-        std::vector<char> vertexShaderErrorMessage(infoLogLength + 1);
-        glGetShaderInfoLog(vertexShaderID, infoLogLength, NULL,
-            &vertexShaderErrorMessage[0]);
-        std::cout << &vertexShaderErrorMessage[0] << std::endl;
+        std::vector<char> shaderErrorMessage(infoLogLength + 1);
+        glGetShaderInfoLog(shaderID, infoLogLength, NULL,
+            &shaderErrorMessage[0]);
+        std::cout << &shaderErrorMessage[0] << std::endl;
     }
 
-    // Compile Fragment Shader
-    std::cout << "Compiling shader : " << fragmentFilePath << std::endl;
-    char const *fragmentSourcePointer = fragmentShaderCode.c_str();
-    glShaderSource(fragmentShaderID, 1, &fragmentSourcePointer, NULL);
-    glCompileShader(fragmentShaderID);
+    return shaderID;
+}
 
-    // Check Fragment Shader
-    glGetShaderiv(fragmentShaderID, GL_COMPILE_STATUS, &result);
-    glGetShaderiv(fragmentShaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
-    if (infoLogLength > 0) {
-        std::vector<char> fragmentShaderErrorMessage(infoLogLength + 1);
-        glGetShaderInfoLog(fragmentShaderID, infoLogLength, NULL,
-            &fragmentShaderErrorMessage[0]);
-        std::cout << &fragmentShaderErrorMessage[0] << std::endl;
-    }
+GLuint loadShaders(std::string const &vertexFilePath,
+    std::string const &fragmentFilePath)
+{
+    // Create the shaders
+    GLuint vertexShaderID = loadAndCompile(vertexFilePath, GL_VERTEX_SHADER);
+    GLuint fragmentShaderID = loadAndCompile(fragmentFilePath, GL_FRAGMENT_SHADER);
 
     // Link the program
     std::cout << "Linking program" << std::endl;
@@ -86,6 +75,8 @@ GLuint loadShaders(std::string const &vertexFilePath,
     glLinkProgram(programID);
 
     // Check the program
+    GLint result = GL_FALSE;
+    int infoLogLength;
     glGetProgramiv(programID, GL_LINK_STATUS, &result);
     glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
     if (infoLogLength > 0) {
@@ -104,6 +95,49 @@ GLuint loadShaders(std::string const &vertexFilePath,
     return programID;
 }
 
+int coloredBody = 0;
+
+std::shared_ptr<RenderGL> phaseRender;
+Axis drawnAxis = Axis::POS0;
+OrbitGenerator orbGen;
+
+void initGLRendering(int argc, char **argv)
+{
+    glutInit(&argc, argv);
+    phaseRender = std::make_shared<RenderGL>();
+    orbGen.generateData();
+
+    auto colors = orbGen.computeColors();
+    std::cout << "Sending data to renderer." << std::endl;
+    phaseRender->updateData(orbGen.orbitLines(), colors);
+//    phaseRender->setProjAxes(solver.projectionAxes(drawnAxis));
+}
+
+void cdisplay(void)
+{
+    phaseRender->display();
+}
+
+void creshape(int w, int h)
+{
+    phaseRender->reshape(w, h);
+}
+
+void cmouseDrag(int x, int y)
+{
+    phaseRender->mouseDrag(x,y);
+}
+
+void cmouseClick(int button, int state, int x, int y)
+{
+    phaseRender->mouseClick(button, state, x, y);
+}
+
+void ckeyPressed(unsigned char key, int a, int b)
+{
+    phaseRender->keyPressed(key, a, b);
+}
+
 RenderGL::RenderGL() :
     numPoints(0),
     numLines(0),
@@ -119,8 +153,35 @@ RenderGL::RenderGL() :
     viewMat(glm::mat4(1.0f)),
     projAxes(0)
 {
+
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
+
+    // set window size
+    glutInitWindowSize(700, 500);
+    // set window location
+    glutInitWindowPosition(250, 50);
+
+    // create window with window text
+    glutCreateWindow("Phase Space Visualizer");
+    glewInit();
+
+    // set background color to Black
+    glClearColor(82/255.0f, 88/255.0f, 91/255.0f, 1.0);
+    // set shade model to Flat
+    glShadeModel(GL_FLAT);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthRange(0.1, 2000.0);
+
     shaderId = loadShaders("rotate.vert", "phase.frag");
     //   shaderId = loadShaders("plain.vert", "plain.frag");
+
+    glutDisplayFunc(cdisplay);
+    //  glutIdleFunc(updateRender);
+    glutReshapeFunc(creshape);
+    glutMotionFunc(cmouseDrag);
+    glutMouseFunc(cmouseClick);
+    glutKeyboardFunc(ckeyPressed);
 }
 
 RenderGL::~RenderGL()
@@ -128,6 +189,65 @@ RenderGL::~RenderGL()
     glDeleteBuffers(1, &vboId);
     glDeleteBuffers(1, &iboId);
     glDeleteProgram(shaderId);
+}
+
+
+void RenderGL::mouseDrag(int x, int y)
+{
+    int dx = x - dragPrevX;
+    int dy = y - dragPrevY;
+    dragPrevX = x;
+    dragPrevY = y;
+
+    float rotX = static_cast<float>(dx * M_PI / 180.0);
+    float rotY = static_cast<float>(dy * M_PI / 180.0);
+    modelMat = glm::rotate(
+        modelMat, rotX, glm::vec3(modelMatInv * glm::vec4(0.0, 1.0, 0.0, 0.0)));
+    modelMat = glm::rotate(
+        modelMat, rotY, glm::vec3(modelMatInv * glm::vec4(1.0, 0.0, 0.0, 0.0)));
+    modelMatInv = glm::inverse(modelMat);
+    modelViewMatInv = glm::inverse(viewMat * modelMat);
+    modelViewProjMat = projMat * viewMat * modelMat;
+
+    glutPostRedisplay();
+
+}
+
+void RenderGL::mouseClick(int button, int state, int x, int y)
+{
+    if (state == GLUT_UP) return;  // Disregard redundant GLUT_UP events
+    if (button == 0) {
+        // Drag started.
+        dragPrevX = x;
+        dragPrevY = y;
+    } else if (button == 3) {
+        // Wheel reports as button 3(scroll up) and button 4(scroll down)
+        moveForward();
+    } else if (button == 4) {
+        moveBackward();
+    }
+}
+
+void RenderGL::keyPressed(unsigned char key, int a, int b)
+{
+    if (key == 'r') {
+        orbGen.generateData();
+		auto colors = orbGen.computeColors();
+		std::cout << "Sending data to renderer." << std::endl;
+		phaseRender->updateData(orbGen.orbitLines(), colors);
+	}
+    else if (key == 'w') {
+        moveForward();
+    } else if (key == 's') {
+        moveBackward();
+    } else if (key == 'a') {
+        drawnAxis = (Axis)((drawnAxis+1)%AXIS_NELEMS);
+        //setProjAxes(solver.projectionAxes(drawnAxis));
+        glutPostRedisplay();
+    } else if (key == 'c') {
+        coloredBody = (coloredBody + 1)%3;
+//        updateColors();
+    }
 }
 
 void RenderGL::update()
@@ -188,6 +308,8 @@ void renderString(float x, float y, void *font, const char *text, glm::vec3 cons
 
 void RenderGL::display()
 {
+	// std::cout << "RenderGL::display. Num points:" << numPoints;
+	// std::cout << "  Num lines:" << numLines << std::endl;
     // clearing the window or remove all drawn objects
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -202,7 +324,7 @@ void RenderGL::display()
         glColor3f(1, 0, 0);
         glVertex3f(0, 0, 0);
         glVertex3f(projAxes[0][0], projAxes[0][1], projAxes[0][2]);
-    
+
         glColor3f(0, 1, 0);
         glVertex3f(0, 0, 0);
         glVertex3f(projAxes[1][0], projAxes[1][1], projAxes[1][2]);
@@ -266,20 +388,6 @@ void RenderGL::reshape(int width, int height)
     modelViewProjMat = projMat * viewMat * modelMat;
 }
 
-void RenderGL::mouseDrag(int dx, int dy)
-{
-    float rotX = static_cast<float>(dx * M_PI / 180.0);
-    float rotY = static_cast<float>(dy * M_PI / 180.0);
-    modelMat = glm::rotate(
-        modelMat, rotX, glm::vec3(modelMatInv * glm::vec4(0.0, 1.0, 0.0, 0.0)));
-    modelMat = glm::rotate(
-        modelMat, rotY, glm::vec3(modelMatInv * glm::vec4(1.0, 0.0, 0.0, 0.0)));
-    modelMatInv = glm::inverse(modelMat);
-    modelViewMatInv = glm::inverse(viewMat * modelMat);
-    modelViewProjMat = projMat * viewMat * modelMat;
-//    display();
-    glutPostRedisplay();
-}
 
 float timeMultiplier()
 {
@@ -323,6 +431,8 @@ void RenderGL::moveBackward()
 void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
     std::vector<std::vector<float>> const &colors)
 {
+	// std::cout << "updateData: numLines=" << lines.size() << std::endl;
+
     glDeleteBuffers(1, &vboId);
     glDeleteBuffers(1, &iboId);
 
@@ -348,12 +458,12 @@ void RenderGL::updateData(std::vector<std::vector<float>> const &lines,
             std::make_move_iterator(lineColor.begin()),
             std::make_move_iterator(lineColor.end()));
     }
-    std::cout << "== Stats:" << std::endl;
-    std::cout << "==              Num. lines:" << lines.size() << std::endl;
-    std::cout << "==    Num. verts per lines:" << lines[0].size() << std::endl;
-    std::cout << "==          Total vertices:" << numPoints << std::endl;
-    std::cout << "==              Total size:"
-        << numPoints * 3 * sizeof(float) / 1024 << " kB" << std::endl;
+    // std::cout << "== Stats:" << std::endl;
+    // std::cout << "==              Num. lines:" << lines.size() << std::endl;
+    // std::cout << "==    Num. verts per lines:" << lines[0].size() << std::endl;
+    // std::cout << "==          Total vertices:" << numPoints << std::endl;
+    // std::cout << "==              Total size:"
+    //     << numPoints * 3 * sizeof(float) / 1024 << " kB" << std::endl;
 
     unsigned int curVertexIndex = 0;
     for (unsigned int curLine = 0; curLine < numLines; ++curLine) {
